@@ -1,5 +1,3 @@
-import * as storageModule from "local-storage-fallback";
-const storage = storageModule.default || storageModule;
 export class JwtUtils {
     constructor(config, state, apiClient) {
         this.config = config;

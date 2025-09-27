@@ -1,8 +1,7 @@
 import {LoginCredentials, AuthConfig, User, AuthResponse} from "../types/types";
 import {AuthState} from "../state/auth-state";
 import {JWTVerifier} from "../jwt/verifier";
-import * as storageModule from "local-storage-fallback";
-const storage = storageModule.default || storageModule;
+import storage from 'local-storage-fallback'
 import {ConnectionError, ConnectionIncorrectResponseError, InvalidInputError, JwtMissingError} from "../errors/errors";
 
 

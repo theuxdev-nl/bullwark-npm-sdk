@@ -1,6 +1,5 @@
 import {AuthConfig, AuthResponse, JwtPayload, User} from "../types/types";
-import * as storageModule from "local-storage-fallback";
-const storage = storageModule.default || storageModule;
+import storage from 'local-storage-fallback'
 import {APIClient} from "../api/client";
 import {UserMissing} from "../errors/errors";
 import {JWTVerifier} from "../jwt/verifier";

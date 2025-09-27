@@ -3,8 +3,7 @@ import { APIClient } from './api/client';
 import { AbilityChecker } from './abilities/checker';
 import { AuthState } from "./state/auth-state";
 import { JwtUtils } from "./utils/jwtUtils";
-import * as storageModule from 'local-storage-fallback';
-const storage = storageModule.default || storageModule;
+import storage from 'local-storage-fallback';
 import { CryptoError } from "./errors/errors";
 import { EventEmitter } from "./events/emitter";
 export class BullwarkSdk {
