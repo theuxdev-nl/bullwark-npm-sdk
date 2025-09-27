@@ -1,3 +1,5 @@
+import * as storageModule from "local-storage-fallback";
+const storage = storageModule.default || storageModule;
 import { ConnectionError, ConnectionIncorrectResponseError, InvalidInputError } from "../errors/errors";
 export class APIClient {
     constructor(config, state) {

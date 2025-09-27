@@ -1,4 +1,5 @@
-import storage from "local-storage-fallback";
+import * as storageModule from "local-storage-fallback";
+const storage = storageModule.default || storageModule;
 import { APIClient } from "../api/client";
 import { JWTVerifier } from "../jwt/verifier";
 export class AuthState {

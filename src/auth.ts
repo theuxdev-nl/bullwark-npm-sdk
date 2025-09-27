@@ -7,7 +7,8 @@ import {
 } from "./types/types";
 import {AuthState} from "./state/auth-state";
 import {JwtUtils} from "./utils/jwtUtils";
-import storage from 'local-storage-fallback';
+import * as storageModule from 'local-storage-fallback';
+const storage = storageModule.default || storageModule;
 import {CryptoError} from "./errors/errors";
 import {EventEmitter} from "./events/emitter";
 

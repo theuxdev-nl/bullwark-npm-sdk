@@ -1,6 +1,7 @@
 import {AuthConfig} from "../types/types";
 import {AuthState} from "../state/auth-state";
-import storage from "local-storage-fallback";
+import * as storageModule from "local-storage-fallback";
+const storage = storageModule.default || storageModule;
 import {APIClient} from "../api/client";
 import {JwtMissingError} from "../errors/errors";
 
