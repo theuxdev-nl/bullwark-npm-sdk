@@ -1,13 +1,19 @@
 {
-  "name": "@theuxdev/bullwark-sdk",
+  "name": "@theuxdev/bullwark-npm-sdk",
   "version": "0.0.1",
-  "description": "npm module to integrate BullWark.",
+  "description": "npm module to integrate Bullwark.",
+  "repository": "@theuxdev/bubullwark-npm-sdk",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "prepublishOnly": "pnpm build"
+    "prepublishOnly": "pnpm build",
+    "lint": "eslint ."
   },
   "keywords": [
     "auth",
@@ -15,15 +21,22 @@
     "saas",
     "bullwark"
   ],
-  "author": "Your Name",
+  "author": "Paul 'Bull' Brouwer",
   "license": "MIT",
   "devDependencies": {
+    "@eslint/js": "^9.36.0",
+    "@eslint/json": "^0.13.2",
     "@types/node": "^20.0.0",
+    "eslint": "^9.36.0",
+    "globals": "^16.4.0",
+    "jiti": "^2.6.0",
     "jose": "^6.1.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "typescript-eslint": "^8.44.1"
   },
   "dependencies": {
-    "axios": "^1.6.0"
+    "axios": "^1.6.0",
+    "local-storage-fallback": "^5.0.0"
   },
   "packageManager": "pnpm@10.17.1"
 }

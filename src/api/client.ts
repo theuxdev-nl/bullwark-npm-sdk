@@ -1,76 +1,88 @@
-import {LoginCredentials, AuthConfig, JwtResponse, AuthResponse, User} from "../../types/types";
+import {LoginCredentials, AuthConfig, User, AuthResponse} from "../types/types";
 import {AuthState} from "../state/auth-state";
 import {JWTVerifier} from "../jwt/verifier";
-import {jwtVerify} from "jose";
+import storage from "local-storage-fallback";
+import {ConnectionError, ConnectionIncorrectResponseError, InvalidInputError, JwtMissingError} from "../errors/errors";
+
 
 export class APIClient {
-    constructor(private config: AuthConfig, private state: AuthState, private jwtVerifier: JWTVerifier) {}
 
-    async login(credentials: LoginCredentials): Promise<JwtResponse> {
+    constructor(private config: AuthConfig, private state: AuthState) {}
+
+    public async login(email: string, password: string): Promise<{jwt: string, refreshToken: string|null|undefined}> {
+        if(!email) {
+            throw new InvalidInputError('Email missing!')
+        }
+        if(!password) {
+            throw new InvalidInputError('Password missing!')
+        }
+
         const response = await fetch(`${this.config.apiUrl}/api/auth/v1/login${this.config.useCookie ? '' : '?plainRefresh=true'}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-                'X-Tenant-Uuid': this.config.tenantUuid
+                'X-Tenant-Uuid': this.config.tenantUuid,
+                'X-Customer-Uuid': this.config.customerUuid,
             },
-            body: JSON.stringify(credentials),
+            body: JSON.stringify({
+                email: email,
+                password: password,
+            }),
             credentials: this.config.useCookie ? 'include' : 'omit',
         });
 
-        if (!response.ok) {
-            throw new Error('Login failed');
-        }
-
+        if (!response.ok) throw new ConnectionError("Couldn't connect to Bullwark - please try again later.")
         const data = await response.json();
+        if(!data) throw new ConnectionIncorrectResponseError("Incorrect response from Bullwark");
+
         return {
-            jwtToken: data.token,
-            refreshToken: data.refreshToken ?? null,
-        };
+            jwt: data.token,
+            refreshToken: data.refreshToken,
+        }
     }
 
-    async refreshToken(refreshToken: string|null = null): Promise<JwtResponse> {
-        const tokenToUse = refreshToken ?? this.state.storedRefreshToken;
+    public async refresh(suppliedRefreshToken: string|undefined|null = undefined): Promise<{jwt: string, refreshToken: string|null|undefined}> {
         const response = await fetch(`${this.config.apiUrl}/api/auth/v1/refresh${this.config.useCookie ? '' : '?plainRefresh=true'}`, {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
                 'X-Tenant-Uuid': this.config.tenantUuid,
-                ...(tokenToUse && { 'X-Refresh-Token': tokenToUse })
+                'X-Customer-Uuid': this.config.customerUuid,
+                ...(suppliedRefreshToken && { 'X-Refresh-Token': suppliedRefreshToken })
             },
             credentials: this.config.useCookie ? 'include' : 'omit',
         })
 
-        if (!response.ok) throw new Error('Could not refresh token');
-
+        if (!response.ok) throw new ConnectionError("Couldn't connect to Bullwark - please try again later.")
         const data = await response.json();
-        this.state.detailsHash !== data.detailsHash ? await this.fetchUserDetails(data.token) : null // Hash changed, refetch user details, roles and permissions;
+        if(!data) throw new ConnectionIncorrectResponseError("Incorrect response from Bullwark");
 
         return {
-            jwtToken: data.token,
-            refreshToken: this.config.useCookie ? null : data.refreshToken,
+            jwt: data.token,
+            refreshToken: data.refreshToken,
         }
-
     }
 
-    async logout(jwtToken: string|null = null): Promise<void> {
+    public async logout(suppliedJwt: string|null = null): Promise<void> {
         const response = await fetch(`${this.config.apiUrl}/api/auth/v1/logout`, {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
                 'X-Tenant-Uuid': this.config.tenantUuid,
-                'Authorization': `Bearer ${jwtToken ?? this.state.storedJwtToken}`
+                'Authorization': `Bearer ${suppliedJwt ?? this.state.storedJwtToken}`
             }
         })
 
         if (!response.ok) throw new Error("Could not logout");
     }
 
-    async fetchUserDetails(token: string) : Promise<User> {
+    public async fetchUser(token: string) : Promise<User> {
         const response = await fetch(`${this.config.apiUrl}/api/auth/v1/me`, {
             headers: {
+                'X-Customer-Uuid': this.config.customerUuid,
                 'X-Tenant-Uuid': this.config.tenantUuid,
                 'Authorization': `Bearer ${token}`,
                 'Accept': 'application/json',
@@ -78,10 +90,10 @@ export class APIClient {
             }
         });
 
-        if (!response.ok) throw new Error('Could not fetch user details');
-        return await response.json();
-
+        if (!response.ok) throw new ConnectionError('Could not fetch user details');
+        const data = await response.json();
+        if(!data) throw new ConnectionError("Could not fetch user details");
+        return data;
     }
-
 
 }

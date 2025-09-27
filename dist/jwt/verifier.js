@@ -1,6 +1,7 @@
 import { jwtVerify } from "jose";
+import { JwkMissingError, JwtMissingError } from "../errors/errors";
 export class JWTVerifier {
-    constructor(config, state) {
+    constructor(config) {
         this.config = config;
         this.JWKs = [];
     }
@@ -8,37 +9,60 @@ export class JWTVerifier {
         return typeof crypto !== 'undefined' &&
             typeof crypto.subtle !== 'undefined';
     }
-    async getVerifiedTokenPayload(token) {
-        let headers = JSON.parse(atob(token.split('.')[0]));
-        let payload = JSON.parse(atob(token.split('.')[1]));
+    async isValid(token) {
+        if (!token)
+            throw new JwtMissingError("Token not supplied to verify");
         if (this.isCryptoAvailable()) {
-            let jwk = this.getJwkById(headers.kid);
+            const headers = this.getTokenHeaders(token);
+            let jwk = this.getJwkByKidFromCache(headers.kid);
             if (!jwk)
-                await this.refreshJwkById(headers.kid);
-            jwk = this.getJwkById(headers.kid);
+                await this.fetchJwksByKid(headers.kid);
+            jwk = this.getJwkByKidFromCache(headers.kid);
             if (!jwk)
-                throw new Error('Could not verify payload: jwk missing');
-            const { payload: verifiedPayload, protectedHeader: verifiedHeaders } = await jwtVerify(token, jwk, {
-                audience: 'fe',
-                issuer: 'paulauth'
+                throw new JwkMissingError('Could not verify payload: kid-header missing');
+            await jwtVerify(token, jwk, {
+                issuer: 'bullwark',
+                audience: this.config.tenantUuid,
             });
-            headers = verifiedHeaders;
-            payload = verifiedPayload;
+            return true;
         }
+        else if (this.config.devMode) {
+            return true;
+        }
+        return false;
+    }
+    isExpired(token) {
+        const payload = this.getTokenPayload(token);
+        if (!payload.exp || Number.isNaN(payload.exp))
+            throw new Error("JWT exp missing or invalid");
+        return (payload.exp * 1000 < Date.now());
+    }
+    getTokenHeaders(token) {
+        if (!token)
+            throw new JwtMissingError('Token not supplied to get headers');
+        const headers = JSON.parse(atob(token.split('.')[0]));
+        if (!headers)
+            throw new Error("Invalid JWT header");
+        return headers;
+    }
+    getTokenPayload(token) {
+        if (!token)
+            throw new JwtMissingError('Token not supplied to get payload');
+        const data = JSON.parse(atob(token.split('.')[1]));
+        if (!data)
+            throw new Error("Invalid JWT payload");
         return {
-            jwtToken: token,
-            payload: payload,
-            headers: headers,
+            ...data
         };
     }
-    getJwkById(kid) {
+    getJwkByKidFromCache(kid) {
         const index = this.JWKs.findIndex((keySet) => keySet.kid == kid);
         if (index > -1) {
             return this.JWKs[index];
         }
         return undefined;
     }
-    async refreshJwkById(kid) {
+    async fetchJwksByKid(kid) {
         if (!kid)
             throw new Error('kid missing.');
         const response = await fetch(`${this.config.apiUrl}/.well-known/jwks`, {

@@ -1,13 +1,14 @@
 export class JwtUtils {
-    constructor(config, state) {
+    constructor(config, state, apiClient) {
         this.config = config;
         this.state = state;
+        this.apiClient = apiClient;
     }
     timeUntilExpiry(from = null) {
         if (from === null) {
             from = Date.now();
         }
-        const expiresIn = from - this.state.jwtTokenExpiresAt;
+        const expiresIn = (this.state.jwtTokenExpiresAt * 1000) - from;
         if (expiresIn < 0) {
             return 0;
         }

@@ -1,14 +1,18 @@
-import { LoginCredentials, AuthConfig, JwtResponse, User } from "../../types/types";
+import { AuthConfig, User } from "../types/types";
 import { AuthState } from "../state/auth-state";
-import { JWTVerifier } from "../jwt/verifier";
 export declare class APIClient {
     private config;
     private state;
-    private jwtVerifier;
-    constructor(config: AuthConfig, state: AuthState, jwtVerifier: JWTVerifier);
-    login(credentials: LoginCredentials): Promise<JwtResponse>;
-    refreshToken(refreshToken?: string | null): Promise<JwtResponse>;
-    logout(jwtToken?: string | null): Promise<void>;
-    fetchUserDetails(token: string): Promise<User>;
+    constructor(config: AuthConfig, state: AuthState);
+    login(email: string, password: string): Promise<{
+        jwt: string;
+        refreshToken: string | null | undefined;
+    }>;
+    refresh(suppliedRefreshToken?: string | undefined | null): Promise<{
+        jwt: string;
+        refreshToken: string | null | undefined;
+    }>;
+    logout(suppliedJwt?: string | null): Promise<void>;
+    fetchUser(token: string): Promise<User>;
 }
 //# sourceMappingURL=client.d.ts.map

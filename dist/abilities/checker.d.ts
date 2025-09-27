@@ -1,4 +1,4 @@
-import { AuthConfig, User } from "../../types/types";
+import { AuthConfig, User } from "../types/types";
 import { AuthState } from "../state/auth-state";
 export declare class AbilityChecker {
     private config;

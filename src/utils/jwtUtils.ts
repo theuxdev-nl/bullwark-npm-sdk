@@ -1,13 +1,25 @@
-import {AuthConfig} from "../../types/types";
+import {AuthConfig} from "../types/types";
 import {AuthState} from "../state/auth-state";
+import storage from "local-storage-fallback";
+import {APIClient} from "../api/client";
+import {JwtMissingError} from "../errors/errors";
 
 export class JwtUtils {
-    constructor(private config: AuthConfig, private state: AuthState) { }
+    private config: AuthConfig;
+    private state: AuthState;
+    private apiClient: APIClient;
+
+    constructor(config: AuthConfig, state: AuthState, apiClient: APIClient) {
+        this.config = config;
+        this.state = state;
+        this.apiClient = apiClient;
+    }
+
     timeUntilExpiry(from: number|null = null) {
         if (from === null) {
             from = Date.now();
         }
-        const expiresIn = from - this.state.jwtTokenExpiresAt!;
+        const expiresIn = (this.state.jwtTokenExpiresAt! * 1000) - from;
         if(expiresIn < 0){
             return 0;
         }

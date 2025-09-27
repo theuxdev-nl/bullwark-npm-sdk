@@ -1,9 +1,14 @@
-
+import {JWTPayload} from "jose";
 
 export interface AuthConfig {
     apiUrl: string;
     tenantUuid: string;
+    customerUuid: string;
+    devMode?: boolean;
+    useLocalStorage?: boolean;
     useCookie?: boolean;
+    autoRefresh?: boolean;
+    autoRefreshBuffer?: number;
 }
 
 export interface LoginCredentials {
@@ -11,43 +16,36 @@ export interface LoginCredentials {
     password: string;
 }
 
-export interface TokenHeaders {
-    kid: string;
-}
-
-export interface TokenPayload {
-    iat?: number;
-    nbf?: number;
-    exp?: number;
-    userUuid?: string;
-    adminUuid?: string;
-    tenantUuid?: string;
-    customerUuid?: string;
-    detailsHash?: string;
-}
-
-export interface DecodedJwtToken {
-    headers: TokenHeaders;
-    payload: TokenPayload;
-}
-
 export interface AuthResponse {
-    jwtToken: string;
-    refreshToken?: string;
+    verified: boolean
+    jwt: string
+    refreshToken?: string
+    detailsHash?: string
+    payload?: JWTPayload,
+    user?: User
 }
 
-export interface JwtResponse {
-    jwtToken: string;
-    refreshToken?: string;
+export interface JwtHeader {
+    kid: string;
+    alg: string;
+
 }
 
-export interface VerifiedJwt {
-    jwtToken: string;
-    headers: Object;
-    payload: TokenPayload;
+export interface JwtPayload {
+    exp: number;
+    iat: number;
+    nbf: number;
+    iss: string;
+    aud: string;
+    user: User;
+    userUuid: string;
+    tenantUuid: string;
+    customerUuid: string;
+    lastUpdated: string;
+    detailsHash: string;
 }
 
-export interface Jwkey {
+export interface Jwk {
     kid: string;
     kty: string;
     use: string;

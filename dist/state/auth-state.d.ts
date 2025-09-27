@@ -1,15 +1,19 @@
-import { AuthConfig, User, VerifiedJwt } from "../../types/types";
+import { AuthConfig, User } from "../types/types";
+import { APIClient } from "../api/client";
+import { JWTVerifier } from "../jwt/verifier";
 export declare class AuthState {
-    private config;
-    constructor(config: AuthConfig);
+    initialized: boolean;
     user: User | undefined;
     isAuthenticated: boolean;
-    storedJwtToken: string | undefined;
+    storedJwtToken: string | null | undefined;
     storedRefreshToken: string | undefined;
     jwtTokenExpiresAt: number | undefined;
-    detailsHash: string | undefined;
-    setData(verifiedJwt: VerifiedJwt, refreshToken?: string): void;
-    setUser(user: User): void;
+    detailsHash: string | null | undefined;
+    apiClient: APIClient;
+    config: AuthConfig;
+    jwtVerifier: JWTVerifier;
+    constructor(config: AuthConfig);
+    finishInitialing(): void;
     invalidate(): void;
 }
 //# sourceMappingURL=auth-state.d.ts.map

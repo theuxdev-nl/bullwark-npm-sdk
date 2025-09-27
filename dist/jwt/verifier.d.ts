@@ -1,12 +1,14 @@
-import { AuthConfig, VerifiedJwt } from "../../types/types";
-import { AuthState } from "../state/auth-state";
+import { AuthConfig, JwtPayload } from "../types/types";
 export declare class JWTVerifier {
     private config;
-    constructor(config: AuthConfig, state: AuthState);
+    constructor(config: AuthConfig);
     private JWKs;
     isCryptoAvailable(): boolean;
-    getVerifiedTokenPayload(token: string): Promise<VerifiedJwt>;
-    private getJwkById;
-    private refreshJwkById;
+    isValid(token: string): Promise<boolean>;
+    isExpired(token: string): boolean;
+    private getTokenHeaders;
+    getTokenPayload(token: string): JwtPayload;
+    private getJwkByKidFromCache;
+    private fetchJwksByKid;
 }
 //# sourceMappingURL=verifier.d.ts.map

@@ -8,32 +8,32 @@ export class AbilityChecker {
             console.warn('Auth Module: Could not check user permissions, no user in cache or provided.');
             return false;
         }
-        if (user?.abilities?.some(ability => ability.key === '*'))
+        if (user?.abilities?.some(ability => ability.key == '*'))
             return true;
-        return (this.state?.user?.abilities?.some(ability => ability.uuid === uuid) || user?.abilities?.some(ability => ability.uuid === uuid)) ?? false;
+        return (this.state?.user?.abilities?.some(ability => ability.uuid == uuid) || user?.abilities?.some(ability => ability.uuid == uuid)) ?? false;
     }
     userCanKey(key, user = null) {
         if (this.state?.user?.abilities?.length === 0 && !user?.abilities?.length) {
             console.warn('Auth Module: Could not check user permissions, no user in cache or provided.');
             return false;
         }
-        if (user?.abilities?.some(ability => ability.key === '*'))
+        if (user?.abilities?.some(ability => ability.key == '*'))
             return true;
-        return (this.state?.user?.abilities?.some(ability => ability.key === key) || user?.abilities?.some(ability => ability.key === key)) ?? false;
+        return (this.state?.user?.abilities?.some(ability => ability.key == key) || user?.abilities?.some(ability => ability.key == key)) ?? false;
     }
     userHasRole(uuid, user = null) {
         if (this.state?.user?.roles?.length === 0 && !user?.roles?.length) {
             console.warn('Auth module: Could not check user roles, no user in cache or provided');
             return false;
         }
-        return (this.state?.user?.roles?.some(ability => ability.uuid === uuid) || user?.roles?.some(ability => ability.uuid === uuid)) ?? false;
+        return (this.state?.user?.roles?.some(ability => ability.uuid == uuid) || user?.roles?.some(ability => ability.uuid == uuid)) ?? false;
     }
     userHasRoleKey(key, user = null) {
         if (this.state?.user?.roles?.length === 0 && !user?.roles?.length) {
             console.warn('Auth module: Could not check user roles, no user in cache or provided');
             return false;
         }
-        return (this.state?.user?.roles?.some(ability => ability.key === key) || user?.roles?.some(ability => ability.key === key)) ?? false;
+        return (this.state?.user?.roles?.some(ability => ability.key == key) || user?.roles?.some(ability => ability.key == key)) ?? false;
     }
 }
 //# sourceMappingURL=checker.js.map

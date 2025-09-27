@@ -1,25 +1,45 @@
-import {AuthConfig, Jwkey, User, VerifiedJwt} from "../../types/types";
+import {AuthConfig, AuthResponse, JwtPayload, User} from "../types/types";
+import storage from "local-storage-fallback";
+import {APIClient} from "../api/client";
+import {UserMissing} from "../errors/errors";
+import {JWTVerifier} from "../jwt/verifier";
 
 export class AuthState {
-    constructor(private config: AuthConfig) {
-    }
+
+    public initialized: boolean = false;
     public user: User|undefined = undefined;
     public isAuthenticated: boolean = false;
-    public storedJwtToken: string|undefined = undefined;
+    public storedJwtToken: string | null | undefined = undefined;
     public storedRefreshToken: string|undefined = undefined;
     public jwtTokenExpiresAt: number|undefined = undefined;
-    public detailsHash: string|undefined = undefined;
+    public detailsHash: string | null | undefined = undefined;
+    public apiClient: APIClient;
+    public config: AuthConfig;
+    public jwtVerifier: JWTVerifier;
 
-    setData(verifiedJwt: VerifiedJwt, refreshToken?: string) {
-        this.storedJwtToken = verifiedJwt.jwtToken;
-        this.jwtTokenExpiresAt = verifiedJwt.payload.exp!;
-        this.detailsHash = verifiedJwt.payload.detailsHash!;
-        this.storedRefreshToken = this.config.useCookie ? refreshToken : undefined;
+    constructor(config: AuthConfig) {
+        this.config = config;
+        this.jwtVerifier = new JWTVerifier(this.config);
+        const existingJwt = storage.getItem('bullwark:jwt');
+        const existingExp = storage.getItem('bullwark:jwt-exp');
+        const existingRefresh = config.useCookie ? undefined : storage.getItem('bullwark:refresh');
+        this.apiClient = new APIClient(this.config, this);
+
+        if(existingJwt){
+            this.storedJwtToken = existingJwt;
+        }
+
+        if(existingExp){
+            this.jwtTokenExpiresAt = Number(existingExp);
+        }
+
+        if(existingRefresh){
+            this.storedRefreshToken = existingRefresh;
+        }
     }
 
-    setUser(user: User) {
-        this.user = user;
-        this.isAuthenticated = true;
+    finishInitialing() {
+        this.initialized = true;
     }
 
     invalidate() {
@@ -30,5 +50,7 @@ export class AuthState {
         this.jwtTokenExpiresAt = undefined;
         this.detailsHash = undefined;
         this.isAuthenticated = false;
+        storage.removeItem('bullwark:jwt');
+        storage.removeItem('bullwark:jwt-exp');
     }
 }
