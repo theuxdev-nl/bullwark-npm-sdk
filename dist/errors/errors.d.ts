@@ -13,9 +13,6 @@ export declare class ConnectionError extends BullwarkError {
 export declare class InvalidInputError extends BullwarkError {
     constructor(message: string);
 }
-export declare class UserMissing extends BullwarkError {
-    constructor(message: string);
-}
 export declare class ConnectionIncorrectResponseError extends BullwarkError {
     constructor(message: string);
 }

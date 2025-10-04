@@ -34,7 +34,7 @@ export class BullwarkSdk {
         this.state = new AuthState(this.config);
         this.jwtVerifier = new JWTVerifier(this.config);
         this.apiClient = new APIClient(this.config, this.state);
-        this.permissionChecker = new AbilityChecker(this.config, this.state);
+        this.permissionChecker = new AbilityChecker(this.state);
         if (!this.jwtVerifier.isCryptoAvailable() && !this.config.devMode) {
             throw new CryptoError('Crypto.subtle for verifying JWT signature is unavailable! Bullwark will not work. Crypto.subtle only works on HTTPS and localhost domains.');
         } else if (!this.jwtVerifier.isCryptoAvailable()) {
@@ -71,7 +71,7 @@ export class BullwarkSdk {
                     }
                 }
 
-                this.state.invalidateSession().finishInitialing();
+                this.state.invalidateSession().finishInitializing();
                 return;
             }
 
@@ -79,15 +79,17 @@ export class BullwarkSdk {
                 const user = await this.apiClient.fetchUser(jwt);
                 this.state.setUser(user)
                     .setAuthenticated(true)
-                    .finishInitialing();
+                    .finishInitializing();
+
                 this.events.emit('userHydrated', { user });
+                this.events.emit('bullwarkLoaded');
                 await this.startRefreshInterval()
                 return;
             } catch {
                 if(this.config.devMode) {
                     console.debug("Bullwark: Unable to retrieve user details using existing JWT.");
                 }
-                this.state.invalidateSession().finishInitialing();
+                this.state.invalidateSession().finishInitializing();
                 return;
             }
 
@@ -97,20 +99,20 @@ export class BullwarkSdk {
                 const oldRefreshToken = this.config.useCookie ? undefined : this.state.getRefreshToken();
 
                 const {jwt: rawJwt, refreshToken} = await this.apiClient.refresh(oldRefreshToken);
-                if(!await this.jwtVerifier.isValid(rawJwt)) throw new Error("Bullwark: JWT not verified. Possibly security breach!")
                 const {jwt, header, payload} = this.jwtVerifier.dissectJwt(rawJwt);
                 this.state.setJwt(jwt, header, payload);
                 const user: User = await this.apiClient.fetchUser(jwt);
 
                 this.state.setUser(user)
                     .setAuthenticated(true)
-                    .finishInitialing();
+                    .finishInitializing();
 
                 if(!this.config.useCookie && refreshToken){
                     this.state.setRefreshToken(refreshToken);
                 }
 
                 this.events.emit('userHydrated', { user });
+                this.events.emit('bullwarkLoaded');
 
                 await this.startRefreshInterval()
                 return;
@@ -125,7 +127,7 @@ export class BullwarkSdk {
         if(this.config.devMode){
             console.debug("Bullwark: No refresh token or existing JWT in place. Starting clean.")
         }
-        this.state.finishInitialing();
+        this.state.finishInitializing();
     }
 
     /** Perform a login call to Bullwark. Returns 'true' if successful
@@ -149,7 +151,7 @@ export class BullwarkSdk {
         this.state.setJwt(jwt, header, payload)
             .setUser(user)
             .setAuthenticated(true)
-            .finishInitialing();
+            .finishInitializing();
 
         this.events.emit('userLoggedIn', { user });
         await this.startRefreshInterval()
@@ -194,12 +196,32 @@ export class BullwarkSdk {
         return true;
     }
 
+    public async getIsInitialized(): Promise<boolean> {
+        return this.state.getIsInitialized();
+    }
+
+    public getUserCachedAt(): number|undefined {
+        return this.state.getUserCachedAt();
+    }
+
     public getUser(): User | undefined {
         return this.state.getUser();
     }
 
     public getAuthenticated(): boolean {
         return this.state.getAuthenticated();
+    }
+
+    public getJwt(): string | undefined {
+        return this.state.getJwt();
+    }
+
+    public getJwtExp(): number | undefined {
+        return this.state.getJwtExp();
+    }
+
+    public getRefreshToken(): string | undefined {
+        return this.state.getRefreshToken();
     }
 
     public userCan(uuid: string): boolean {
@@ -218,10 +240,12 @@ export class BullwarkSdk {
         return this.permissionChecker.userHasRoleKey(key);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     public on(event: string, callback: Function) {
         this.events.on(event, callback);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     public off(event: string, callback: Function) {
         this.events.off(event, callback);
     }

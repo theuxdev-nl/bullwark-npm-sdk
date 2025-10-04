@@ -1,9 +1,9 @@
-import {AuthConfig, User} from "../types/types";
+import {User} from "../types/types";
 import {AuthState} from "../state/auth-state";
 
 export class AbilityChecker {
 
-    constructor(private config: AuthConfig, private state: AuthState) {}
+    constructor(private state: AuthState) {}
 
     userCan(uuid: string, user: User|null = null) {
         if (this.state?.getUser()?.abilities?.length === 0 && !user?.abilities?.length) {

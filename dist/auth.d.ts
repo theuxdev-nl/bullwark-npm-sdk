@@ -23,8 +23,13 @@ export declare class BullwarkSdk {
     login(email: string, password: string): Promise<boolean>;
     refresh(suppliedRefreshToken?: string | undefined | null): Promise<boolean>;
     logout(token?: string | null): Promise<boolean>;
+    getIsInitialized(): Promise<boolean>;
+    getUserCachedAt(): number | undefined;
     getUser(): User | undefined;
     getAuthenticated(): boolean;
+    getJwt(): string | undefined;
+    getJwtExp(): number | undefined;
+    getRefreshToken(): string | undefined;
     userCan(uuid: string): boolean;
     userCanKey(key: string): boolean;
     userHasRole(uuid: string): boolean;

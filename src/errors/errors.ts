@@ -42,15 +42,6 @@ export class InvalidInputError extends BullwarkError{
     }
 }
 
-export class UserMissing extends BullwarkError{
-    constructor(message: string) {
-        super(message);
-        this.message = message;
-        this.name = "UserMissing";
-        Object.setPrototypeOf(this, UserMissing.prototype);
-    }
-}
-
 export class ConnectionIncorrectResponseError extends BullwarkError{
     constructor(message: string) {
         super(message);

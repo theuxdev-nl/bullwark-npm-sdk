@@ -1,6 +1,5 @@
 export class AbilityChecker {
-    constructor(config, state) {
-        this.config = config;
+    constructor(state) {
         this.state = state;
     }
     userCan(uuid, user = null) {

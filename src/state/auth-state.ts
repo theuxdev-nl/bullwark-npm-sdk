@@ -3,7 +3,8 @@ import storage from 'local-storage-fallback'
 import {JWTHeaderParameters, JWTPayload} from "jose";
 
 export class AuthState {
-    private initialized: boolean = false;
+    private readonly initPromise: Promise<boolean>;
+    private resolveInit!: (value: boolean) => void;
     private authenticated: boolean = false;
     private jwt: string | undefined = undefined;
     private jwtExp: number | undefined = undefined;
@@ -22,6 +23,10 @@ export class AuthState {
         const existingRefresh = !this.config.useCookie
             ? storage.getItem('bullwark:refresh-token')
             : undefined;
+
+        this.initPromise = new Promise((resolve) => {
+            this.resolveInit = resolve;
+        });
 
 
         if (existingJwt) {
@@ -44,8 +49,8 @@ export class AuthState {
      * Check if the service is done loading.
      * @returns boolean - False while the app is still starting (checking JWT / refresh token)
      */
-    public getIsInitialized(): boolean {
-        return this.initialized;
+    public async getIsInitialized(): Promise<boolean> {
+        return await this.initPromise;
     }
 
     /**
@@ -135,12 +140,12 @@ export class AuthState {
     /**
      * Store the JWT in state, AFTER verification.
      * @param rawJwt - Raw JWT string
-     * @param header - Decoded JWT header
+     * @param _header - Decoded JWT header
      * @param payload - Decoded JWT payload
      * @param persist - Whether to persist the tokens to localStorage (or any storage fallback). Default: true
      *
      */
-    public setJwt(rawJwt: string, header: JWTHeaderParameters, payload: JWTPayload, persist: boolean = true) {
+    public setJwt(rawJwt: string, _header: JWTHeaderParameters, payload: JWTPayload, persist: boolean = true) {
         this.jwt = rawJwt;
         this.jwtExp = payload.exp;
         this.previousDetailsHash = this.detailsHash;
@@ -172,8 +177,8 @@ export class AuthState {
     /**
      * Set the authState to 'initialized'.
      */
-    public finishInitialing() {
-        this.initialized = true;
+    public finishInitializing() {
+        this.resolveInit(true); // Resolve the promise
         return this;
     }
 

@@ -18,7 +18,7 @@ export class JWTVerifier {
         if (!token) throw new JwtMissingError("Token not supplied to verify")
         if (this.isCryptoAvailable()) {
             const {jwtVerify} = await import('jose');
-            const {jwt, header} = this.dissectJwt(token);
+            const {header} = this.dissectJwt(token);
             if (!header['kid']) throw new Error("KID missign from JWT!")
 
             let jwk: Jwk | undefined = this.getJwkByKidFromCache(header.kid) as Jwk;
@@ -44,7 +44,7 @@ export class JWTVerifier {
     }
 
     private getJwkByKidFromCache(kid: string): Jwk | undefined {
-        const index = this.JWKs.findIndex((keySet: any) => keySet.kid == kid);
+        const index = this.JWKs.findIndex((keySet: SavedJwk) => keySet.jwk.kid == kid);
         if (index > -1) {
             const jwk = this.JWKs[index];
             if (jwk.expiresAt > Date.now()) return jwk.jwk;
@@ -62,7 +62,7 @@ export class JWTVerifier {
 
         if (!response.ok) throw new Error('Could not refresh jwks');
         const data = await response.json();
-        const key = data.keys.find((keySet: any) => keySet.kid === kid);
+        const key = data.keys.find((keySet: SavedJwk) => keySet.jwk.kid === kid);
         if (!key) throw new Error('Could not refresh jwks');
         this.JWKs.push({
             jwk: key,

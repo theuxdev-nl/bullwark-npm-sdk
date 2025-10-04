@@ -1,7 +1,6 @@
 import storage from 'local-storage-fallback';
 export class AuthState {
     constructor(config) {
-        this.initialized = false;
         this.authenticated = false;
         this.jwt = undefined;
         this.jwtExp = undefined;
@@ -16,6 +15,9 @@ export class AuthState {
         const existingRefresh = !this.config.useCookie
             ? storage.getItem('bullwark:refresh-token')
             : undefined;
+        this.initPromise = new Promise((resolve) => {
+            this.resolveInit = resolve;
+        });
         if (existingJwt) {
             this.jwt = existingJwt;
         }
@@ -31,8 +33,8 @@ export class AuthState {
      * Check if the service is done loading.
      * @returns boolean - False while the app is still starting (checking JWT / refresh token)
      */
-    getIsInitialized() {
-        return this.initialized;
+    async getIsInitialized() {
+        return await this.initPromise;
     }
     /**
      * Get user's details stored from memory.
@@ -111,12 +113,12 @@ export class AuthState {
     /**
      * Store the JWT in state, AFTER verification.
      * @param rawJwt - Raw JWT string
-     * @param header - Decoded JWT header
+     * @param _header - Decoded JWT header
      * @param payload - Decoded JWT payload
      * @param persist - Whether to persist the tokens to localStorage (or any storage fallback). Default: true
      *
      */
-    setJwt(rawJwt, header, payload, persist = true) {
+    setJwt(rawJwt, _header, payload, persist = true) {
         this.jwt = rawJwt;
         this.jwtExp = payload.exp;
         this.previousDetailsHash = this.detailsHash;
@@ -144,8 +146,8 @@ export class AuthState {
     /**
      * Set the authState to 'initialized'.
      */
-    finishInitialing() {
-        this.initialized = true;
+    finishInitializing() {
+        this.resolveInit(true); // Resolve the promise
         return this;
     }
     /**

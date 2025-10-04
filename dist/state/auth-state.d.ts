@@ -1,7 +1,8 @@
 import { AuthConfig, User } from "../types/types";
 import { JWTHeaderParameters, JWTPayload } from "jose";
 export declare class AuthState {
-    private initialized;
+    private readonly initPromise;
+    private resolveInit;
     private authenticated;
     private jwt;
     private jwtExp;
@@ -16,7 +17,7 @@ export declare class AuthState {
      * Check if the service is done loading.
      * @returns boolean - False while the app is still starting (checking JWT / refresh token)
      */
-    getIsInitialized(): boolean;
+    getIsInitialized(): Promise<boolean>;
     /**
      * Get user's details stored from memory.
      * @returns ?User
@@ -70,12 +71,12 @@ export declare class AuthState {
     /**
      * Store the JWT in state, AFTER verification.
      * @param rawJwt - Raw JWT string
-     * @param header - Decoded JWT header
+     * @param _header - Decoded JWT header
      * @param payload - Decoded JWT payload
      * @param persist - Whether to persist the tokens to localStorage (or any storage fallback). Default: true
      *
      */
-    setJwt(rawJwt: string, header: JWTHeaderParameters, payload: JWTPayload, persist?: boolean): this;
+    setJwt(rawJwt: string, _header: JWTHeaderParameters, payload: JWTPayload, persist?: boolean): this;
     /**
      * Store a refreshToken in memory
      * Not recommended on client-side apps: set 'useCookie' config to true and use HTTP-only cookies.
@@ -86,7 +87,7 @@ export declare class AuthState {
     /**
      * Set the authState to 'initialized'.
      */
-    finishInitialing(): this;
+    finishInitializing(): this;
     /**
      * Perform a 'logout' option on the local state, to remove all stored values
      */
