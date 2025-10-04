@@ -1,6 +1,6 @@
 {
   "name": "@theuxdev/bullwark-npm-sdk",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "npm module to integrate Bullwark.",
   "repository": "@theuxdev/bullwark-npm-sdk",
   "publishConfig": {
