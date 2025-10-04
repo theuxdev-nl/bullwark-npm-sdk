@@ -30,6 +30,8 @@ export declare class BullwarkSdk {
     getJwt(): string | undefined;
     getJwtExp(): number | undefined;
     getRefreshToken(): string | undefined;
+    getCustomerUuid(): string | undefined;
+    getUserUuid(): string | undefined;
     userCan(uuid: string): boolean;
     userCanKey(key: string): boolean;
     userHasRole(uuid: string): boolean;

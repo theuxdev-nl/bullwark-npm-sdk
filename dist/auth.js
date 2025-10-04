@@ -183,6 +183,12 @@ export class BullwarkSdk {
     getRefreshToken() {
         return this.state.getRefreshToken();
     }
+    getCustomerUuid() {
+        return this.getUser()?.customerUuid;
+    }
+    getUserUuid() {
+        return this.getUser()?.uuid;
+    }
     userCan(uuid) {
         return this.permissionChecker.userCan(uuid);
     }
@@ -195,11 +201,11 @@ export class BullwarkSdk {
     userHasRoleKey(key) {
         return this.permissionChecker.userHasRoleKey(key);
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+     
     on(event, callback) {
         this.events.on(event, callback);
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+     
     off(event, callback) {
         this.events.off(event, callback);
     }

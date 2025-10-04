@@ -224,6 +224,18 @@ export class BullwarkSdk {
         return this.state.getRefreshToken();
     }
 
+    public getUserUuid(): string | undefined {
+        return this.getUser()?.uuid;
+    }
+
+    public getTenantUuid(): string | undefined {
+        return this.getUser()?.tenantUuid;
+    }
+
+    public getCustomerUuid(): string | undefined {
+        return this.getUser()?.customerUuid;
+    }
+
     public userCan(uuid: string): boolean {
         return this.permissionChecker.userCan(uuid);
     }

@@ -54,6 +54,8 @@ export interface User {
     email: string;
     firstName?: string;
     lastName?: string;
+    customerUuid: string;
+    tenantUuid?: string;
     roles: Role[];
     primaryRole: Role;
     abilities: Ability[];
