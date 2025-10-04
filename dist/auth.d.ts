@@ -1,11 +1,11 @@
-import { AuthConfig, User } from "./types/types";
+import { AuthConfig, UserData } from "./types/types";
 import { AuthState } from "./state/auth-state";
 export declare class BullwarkSdk {
     readonly state: AuthState;
     private readonly config;
     private readonly jwtVerifier;
     private readonly apiClient;
-    private permissionChecker;
+    private abilityChecker;
     private refreshInterval?;
     private events;
     constructor(config: AuthConfig);
@@ -25,7 +25,7 @@ export declare class BullwarkSdk {
     logout(token?: string | null): Promise<boolean>;
     getIsInitialized(): Promise<boolean>;
     getUserCachedAt(): number | undefined;
-    getUser(): User | undefined;
+    getUser(): UserData | undefined;
     getAuthenticated(): boolean;
     getJwt(): string | undefined;
     getJwtExp(): number | undefined;

@@ -1,4 +1,3 @@
-import { JWTPayload } from "jose";
 export interface AuthConfig {
     devMode?: boolean;
     apiUrl?: string;
@@ -10,35 +9,6 @@ export interface AuthConfig {
     autoRefreshBuffer?: number;
     jwkCacheTime?: number;
     userCacheTime?: number;
-}
-export interface LoginCredentials {
-    email: string;
-    password: string;
-}
-export interface AuthResponse {
-    verified: boolean;
-    jwt: string;
-    refreshToken?: string;
-    detailsHash?: string;
-    payload?: JWTPayload;
-    user?: User;
-}
-export interface JwtHeader {
-    kid: string;
-    alg: string;
-}
-export interface JwtPayload {
-    exp: number;
-    iat: number;
-    nbf: number;
-    iss: string;
-    aud: string;
-    user: User;
-    userUuid: string;
-    tenantUuid: string;
-    customerUuid: string;
-    lastUpdated: string;
-    detailsHash: string;
 }
 export interface Jwk {
     kid: string;
@@ -56,6 +26,9 @@ export interface User {
     lastName?: string;
     customerUuid: string;
     tenantUuid?: string;
+}
+export interface UserData {
+    user: User;
     roles: Role[];
     primaryRole: Role;
     abilities: Ability[];

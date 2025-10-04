@@ -70,12 +70,12 @@ export class APIClient {
         if (!response.ok)
             throw new Error("Could not logout");
     }
-    async fetchUser(token) {
+    async fetchUser(jwt) {
         const response = await fetch(`${this.config.apiUrl}/me`, {
             headers: {
                 'X-Customer-Uuid': this.config.customerUuid,
                 'X-Tenant-Uuid': this.config.tenantUuid,
-                'Authorization': `Bearer ${token}`,
+                'Authorization': `Bearer ${jwt}`,
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
             }

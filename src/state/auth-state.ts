@@ -1,4 +1,4 @@
-import {AuthConfig, User} from "../types/types";
+import {AuthConfig, UserData} from "../types/types";
 import storage from 'local-storage-fallback'
 import {JWTHeaderParameters, JWTPayload} from "jose";
 
@@ -13,7 +13,7 @@ export class AuthState {
     private previousDetailsHash: string | undefined = undefined;
     private readonly config: AuthConfig;
 
-    private user: User | undefined = undefined;
+    private user: UserData | undefined = undefined;
     private userCachedAt: number | undefined = undefined;
 
     constructor(config: AuthConfig) {
@@ -57,7 +57,7 @@ export class AuthState {
      * Get user's details stored from memory.
      * @returns ?User
      */
-    public getUser(): User | undefined {
+    public getUser(): UserData | undefined {
         return this.user;
     }
 
@@ -122,7 +122,7 @@ export class AuthState {
      * Save a timestamp of when the user was cached.
      * @param user
      */
-    public setUser(user: User) {
+    public setUser(user: UserData) {
         this.user = user;
         this.userCachedAt = Date.now();
         return this;

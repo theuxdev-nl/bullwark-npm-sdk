@@ -1,4 +1,4 @@
-import { AuthConfig, User } from "../types/types";
+import { AuthConfig, UserData } from "../types/types";
 import { AuthState } from "../state/auth-state";
 export declare class APIClient {
     private config;
@@ -13,6 +13,6 @@ export declare class APIClient {
         refreshToken: string | null | undefined;
     }>;
     logout(suppliedJwt?: string | null): Promise<void>;
-    fetchUser(token: string): Promise<User>;
+    fetchUser(jwt: string): Promise<UserData>;
 }
 //# sourceMappingURL=client.d.ts.map

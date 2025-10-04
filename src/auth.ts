@@ -3,7 +3,7 @@ import {APIClient} from './api/client';
 import {AbilityChecker} from './abilities/checker';
 import {
     AuthConfig,
-    User,
+    UserData,
 } from "./types/types";
 import {AuthState} from "./state/auth-state";
 import {CryptoError} from "./errors/errors";
@@ -15,7 +15,7 @@ export class BullwarkSdk {
     private readonly config: AuthConfig;
     private readonly jwtVerifier: JWTVerifier;
     private readonly apiClient: APIClient;
-    private permissionChecker: AbilityChecker;
+    private abilityChecker: AbilityChecker;
     private refreshInterval?: NodeJS.Timeout;
     private events = new EventEmitter();
 
@@ -34,7 +34,7 @@ export class BullwarkSdk {
         this.state = new AuthState(this.config);
         this.jwtVerifier = new JWTVerifier(this.config);
         this.apiClient = new APIClient(this.config, this.state);
-        this.permissionChecker = new AbilityChecker(this.state);
+        this.abilityChecker = new AbilityChecker(this.state);
         if (!this.jwtVerifier.isCryptoAvailable() && !this.config.devMode) {
             throw new CryptoError('Crypto.subtle for verifying JWT signature is unavailable! Bullwark will not work. Crypto.subtle only works on HTTPS and localhost domains.');
         } else if (!this.jwtVerifier.isCryptoAvailable()) {
@@ -101,9 +101,9 @@ export class BullwarkSdk {
                 const {jwt: rawJwt, refreshToken} = await this.apiClient.refresh(oldRefreshToken);
                 const {jwt, header, payload} = this.jwtVerifier.dissectJwt(rawJwt);
                 this.state.setJwt(jwt, header, payload);
-                const user: User = await this.apiClient.fetchUser(jwt);
+                const userData: UserData = await this.apiClient.fetchUser(jwt);
 
-                this.state.setUser(user)
+                this.state.setUser(userData)
                     .setAuthenticated(true)
                     .finishInitializing();
 
@@ -111,7 +111,7 @@ export class BullwarkSdk {
                     this.state.setRefreshToken(refreshToken);
                 }
 
-                this.events.emit('userHydrated', { user });
+                this.events.emit('userHydrated', { userData });
                 this.events.emit('bullwarkLoaded');
 
                 await this.startRefreshInterval()
@@ -146,14 +146,14 @@ export class BullwarkSdk {
         }
 
         const {jwt, header, payload} = this.jwtVerifier.dissectJwt(rawJwt);
-        const user: User = await this.apiClient.fetchUser(jwt)
+        const userData: UserData = await this.apiClient.fetchUser(jwt)
 
         this.state.setJwt(jwt, header, payload)
-            .setUser(user)
+            .setUser(userData)
             .setAuthenticated(true)
             .finishInitializing();
 
-        this.events.emit('userLoggedIn', { user });
+        this.events.emit('userLoggedIn', { userData });
         await this.startRefreshInterval()
         return true;
     }
@@ -170,16 +170,16 @@ export class BullwarkSdk {
             this.state.setRefreshToken(refreshToken)
         }
 
-        let user: User;
+        let userData: UserData;
         const detailsChanged = this.state.getDetailsHashChanged();
         if(detailsChanged) {
-            user = await this.apiClient.fetchUser(jwt);
-            this.state.setUser(user);
+            userData = await this.apiClient.fetchUser(jwt);
+            this.state.setUser(userData);
         } else {
-            user = this.state.getUser() ?? await this.apiClient.fetchUser(jwt);
+            userData = this.state.getUser() ?? await this.apiClient.fetchUser(jwt);
         }
 
-        this.events.emit('userRefreshed', { user });
+        this.events.emit('userRefreshed', { userData });
 
         return true;
     }
@@ -204,7 +204,7 @@ export class BullwarkSdk {
         return this.state.getUserCachedAt();
     }
 
-    public getUser(): User | undefined {
+    public getUser(): UserData | undefined {
         return this.state.getUser();
     }
 
@@ -225,31 +225,31 @@ export class BullwarkSdk {
     }
 
     public getUserUuid(): string | undefined {
-        return this.getUser()?.uuid;
+        return this.getUser()?.user.uuid;
     }
 
     public getTenantUuid(): string | undefined {
-        return this.getUser()?.tenantUuid;
+        return this.getUser()?.user.tenantUuid;
     }
 
     public getCustomerUuid(): string | undefined {
-        return this.getUser()?.customerUuid;
+        return this.getUser()?.user.customerUuid;
     }
 
     public userCan(uuid: string): boolean {
-        return this.permissionChecker.userCan(uuid);
+        return this.abilityChecker.userCan(uuid);
     }
 
     public userCanKey(key: string): boolean {
-        return this.permissionChecker.userCanKey(key);
+        return this.abilityChecker.userCanKey(key);
     }
 
     public userHasRole(uuid: string): boolean {
-        return this.permissionChecker.userHasRole(uuid);
+        return this.abilityChecker.userHasRole(uuid);
     }
 
     public userHasRoleKey(key: string): boolean {
-        return this.permissionChecker.userHasRoleKey(key);
+        return this.abilityChecker.userHasRoleKey(key);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type

@@ -1,4 +1,4 @@
-import {AuthConfig, User} from "../types/types";
+import {AuthConfig, UserData} from "../types/types";
 import {AuthState} from "../state/auth-state";
 import {ConnectionError, ConnectionIncorrectResponseError, InvalidInputError} from "../errors/errors";
 
@@ -77,12 +77,12 @@ export class APIClient {
         if (!response.ok) throw new Error("Could not logout");
     }
 
-    public async fetchUser(token: string) : Promise<User> {
+    public async fetchUser(jwt: string) : Promise<UserData> {
         const response = await fetch(`${this.config.apiUrl}/me`, {
             headers: {
                 'X-Customer-Uuid': this.config.customerUuid,
                 'X-Tenant-Uuid': this.config.tenantUuid,
-                'Authorization': `Bearer ${token}`,
+                'Authorization': `Bearer ${jwt}`,
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
             }

@@ -21,7 +21,7 @@ export class BullwarkSdk {
         this.state = new AuthState(this.config);
         this.jwtVerifier = new JWTVerifier(this.config);
         this.apiClient = new APIClient(this.config, this.state);
-        this.permissionChecker = new AbilityChecker(this.state);
+        this.abilityChecker = new AbilityChecker(this.state);
         if (!this.jwtVerifier.isCryptoAvailable() && !this.config.devMode) {
             throw new CryptoError('Crypto.subtle for verifying JWT signature is unavailable! Bullwark will not work. Crypto.subtle only works on HTTPS and localhost domains.');
         }
@@ -80,14 +80,14 @@ export class BullwarkSdk {
                 const { jwt: rawJwt, refreshToken } = await this.apiClient.refresh(oldRefreshToken);
                 const { jwt, header, payload } = this.jwtVerifier.dissectJwt(rawJwt);
                 this.state.setJwt(jwt, header, payload);
-                const user = await this.apiClient.fetchUser(jwt);
-                this.state.setUser(user)
+                const userData = await this.apiClient.fetchUser(jwt);
+                this.state.setUser(userData)
                     .setAuthenticated(true)
                     .finishInitializing();
                 if (!this.config.useCookie && refreshToken) {
                     this.state.setRefreshToken(refreshToken);
                 }
-                this.events.emit('userHydrated', { user });
+                this.events.emit('userHydrated', { userData });
                 this.events.emit('bullwarkLoaded');
                 await this.startRefreshInterval();
                 return;
@@ -120,12 +120,12 @@ export class BullwarkSdk {
             this.state.setRefreshToken(refreshToken);
         }
         const { jwt, header, payload } = this.jwtVerifier.dissectJwt(rawJwt);
-        const user = await this.apiClient.fetchUser(jwt);
+        const userData = await this.apiClient.fetchUser(jwt);
         this.state.setJwt(jwt, header, payload)
-            .setUser(user)
+            .setUser(userData)
             .setAuthenticated(true)
             .finishInitializing();
-        this.events.emit('userLoggedIn', { user });
+        this.events.emit('userLoggedIn', { userData });
         await this.startRefreshInterval();
         return true;
     }
@@ -140,16 +140,16 @@ export class BullwarkSdk {
         if (!this.config.useCookie && refreshToken) {
             this.state.setRefreshToken(refreshToken);
         }
-        let user;
+        let userData;
         const detailsChanged = this.state.getDetailsHashChanged();
         if (detailsChanged) {
-            user = await this.apiClient.fetchUser(jwt);
-            this.state.setUser(user);
+            userData = await this.apiClient.fetchUser(jwt);
+            this.state.setUser(userData);
         }
         else {
-            user = this.state.getUser() ?? await this.apiClient.fetchUser(jwt);
+            userData = this.state.getUser() ?? await this.apiClient.fetchUser(jwt);
         }
-        this.events.emit('userRefreshed', { user });
+        this.events.emit('userRefreshed', { userData });
         return true;
     }
     async logout(token = null) {
@@ -184,25 +184,25 @@ export class BullwarkSdk {
         return this.state.getRefreshToken();
     }
     getUserUuid() {
-        return this.getUser()?.uuid;
+        return this.getUser()?.user.uuid;
     }
     getTenantUuid() {
-        return this.getUser()?.tenantUuid;
+        return this.getUser()?.user.tenantUuid;
     }
     getCustomerUuid() {
-        return this.getUser()?.customerUuid;
+        return this.getUser()?.user.customerUuid;
     }
     userCan(uuid) {
-        return this.permissionChecker.userCan(uuid);
+        return this.abilityChecker.userCan(uuid);
     }
     userCanKey(key) {
-        return this.permissionChecker.userCanKey(key);
+        return this.abilityChecker.userCanKey(key);
     }
     userHasRole(uuid) {
-        return this.permissionChecker.userHasRole(uuid);
+        return this.abilityChecker.userHasRole(uuid);
     }
     userHasRoleKey(key) {
-        return this.permissionChecker.userHasRoleKey(key);
+        return this.abilityChecker.userHasRoleKey(key);
     }
     // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     on(event, callback) {

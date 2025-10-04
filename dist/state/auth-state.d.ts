@@ -1,4 +1,4 @@
-import { AuthConfig, User } from "../types/types";
+import { AuthConfig, UserData } from "../types/types";
 import { JWTHeaderParameters, JWTPayload } from "jose";
 export declare class AuthState {
     private readonly initPromise;
@@ -22,7 +22,7 @@ export declare class AuthState {
      * Get user's details stored from memory.
      * @returns ?User
      */
-    getUser(): User | undefined;
+    getUser(): UserData | undefined;
     /**
      * Check if the user is successfully logged in.
      * @returns boolean
@@ -62,7 +62,7 @@ export declare class AuthState {
      * Save a timestamp of when the user was cached.
      * @param user
      */
-    setUser(user: User): this;
+    setUser(user: UserData): this;
     /**
      * Set the authenticated field
      * @param authenticated
