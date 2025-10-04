@@ -1,4 +1,3 @@
-import { jwtVerify } from "jose";
 import { JwkMissingError, JwtMissingError } from "../errors/errors";
 export class JWTVerifier {
     constructor(config) {
@@ -6,18 +5,22 @@ export class JWTVerifier {
         this.JWKs = [];
     }
     isCryptoAvailable() {
-        return typeof crypto !== 'undefined' &&
+        return typeof window !== 'undefined' &&
+            typeof crypto !== 'undefined' &&
             typeof crypto.subtle !== 'undefined';
     }
     async isValid(token) {
         if (!token)
             throw new JwtMissingError("Token not supplied to verify");
         if (this.isCryptoAvailable()) {
-            const headers = this.getTokenHeaders(token);
-            let jwk = this.getJwkByKidFromCache(headers.kid);
+            const { jwtVerify } = await import('jose');
+            const { jwt, header } = this.dissectJwt(token);
+            if (!header['kid'])
+                throw new Error("KID missign from JWT!");
+            let jwk = this.getJwkByKidFromCache(header.kid);
             if (!jwk)
-                await this.fetchJwksByKid(headers.kid);
-            jwk = this.getJwkByKidFromCache(headers.kid);
+                await this.fetchJwksByKid(header.kid);
+            jwk = this.getJwkByKidFromCache(header.kid);
             if (!jwk)
                 throw new JwkMissingError('Could not verify payload: kid-header missing');
             await jwtVerify(token, jwk, {
@@ -32,10 +35,45 @@ export class JWTVerifier {
         return false;
     }
     isExpired(token) {
-        const payload = this.getTokenPayload(token);
+        const { payload } = this.dissectJwt(token);
         if (!payload.exp || Number.isNaN(payload.exp))
             throw new Error("JWT exp missing or invalid");
         return (payload.exp * 1000 < Date.now());
+    }
+    getJwkByKidFromCache(kid) {
+        const index = this.JWKs.findIndex((keySet) => keySet.kid == kid);
+        if (index > -1) {
+            const jwk = this.JWKs[index];
+            if (jwk.expiresAt > Date.now())
+                return jwk.jwk;
+        }
+        return undefined;
+    }
+    async fetchJwksByKid(kid) {
+        if (!kid)
+            throw new Error('kid missing.');
+        const response = await fetch(`${this.config.jwkUrl}`, {
+            headers: {
+                'X-Tenant-Uuid': this.config.tenantUuid,
+            }
+        });
+        if (!response.ok)
+            throw new Error('Could not refresh jwks');
+        const data = await response.json();
+        const key = data.keys.find((keySet) => keySet.kid === kid);
+        if (!key)
+            throw new Error('Could not refresh jwks');
+        this.JWKs.push({
+            jwk: key,
+            expiresAt: Date.now() + ((this.config.jwkCacheTime ?? 86400) * 1000)
+        });
+    }
+    dissectJwt(jwt) {
+        return {
+            jwt,
+            header: this.getTokenHeaders(jwt),
+            payload: this.getTokenPayload(jwt),
+        };
     }
     getTokenHeaders(token) {
         if (!token)
@@ -51,32 +89,7 @@ export class JWTVerifier {
         const data = JSON.parse(atob(token.split('.')[1]));
         if (!data)
             throw new Error("Invalid JWT payload");
-        return {
-            ...data
-        };
-    }
-    getJwkByKidFromCache(kid) {
-        const index = this.JWKs.findIndex((keySet) => keySet.kid == kid);
-        if (index > -1) {
-            return this.JWKs[index];
-        }
-        return undefined;
-    }
-    async fetchJwksByKid(kid) {
-        if (!kid)
-            throw new Error('kid missing.');
-        const response = await fetch(`${this.config.apiUrl}/.well-known/jwks`, {
-            headers: {
-                'X-Tenant-Uuid': this.config.tenantUuid,
-            }
-        });
-        if (!response.ok)
-            throw new Error('Could not refresh jwks');
-        const data = await response.json();
-        const key = data.keys.find((keySet) => keySet.kid === kid);
-        if (!key)
-            throw new Error('Could not refresh jwks');
-        this.JWKs.push(key);
+        return data;
     }
 }
 //# sourceMappingURL=verifier.js.map

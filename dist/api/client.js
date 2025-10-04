@@ -11,7 +11,7 @@ export class APIClient {
         if (!password) {
             throw new InvalidInputError('Password missing!');
         }
-        const response = await fetch(`${this.config.apiUrl}/api/auth/v1/login${this.config.useCookie ? '' : '?plainRefresh=true'}`, {
+        const response = await fetch(`${this.config.apiUrl}/login${this.config.useCookie ? '' : '?plainRefresh=true'}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -36,7 +36,7 @@ export class APIClient {
         };
     }
     async refresh(suppliedRefreshToken = undefined) {
-        const response = await fetch(`${this.config.apiUrl}/api/auth/v1/refresh${this.config.useCookie ? '' : '?plainRefresh=true'}`, {
+        const response = await fetch(`${this.config.apiUrl}/refresh${this.config.useCookie ? '' : '?plainRefresh=true'}`, {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
@@ -58,20 +58,20 @@ export class APIClient {
         };
     }
     async logout(suppliedJwt = null) {
-        const response = await fetch(`${this.config.apiUrl}/api/auth/v1/logout`, {
+        const response = await fetch(`${this.config.apiUrl}/logout`, {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
                 'X-Tenant-Uuid': this.config.tenantUuid,
-                'Authorization': `Bearer ${suppliedJwt ?? this.state.storedJwtToken}`
+                'Authorization': `Bearer ${suppliedJwt ?? this.state.getJwt()}`
             }
         });
         if (!response.ok)
             throw new Error("Could not logout");
     }
     async fetchUser(token) {
-        const response = await fetch(`${this.config.apiUrl}/api/auth/v1/me`, {
+        const response = await fetch(`${this.config.apiUrl}/me`, {
             headers: {
                 'X-Customer-Uuid': this.config.customerUuid,
                 'X-Tenant-Uuid': this.config.tenantUuid,

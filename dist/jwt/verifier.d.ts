@@ -1,4 +1,5 @@
-import { AuthConfig, JwtPayload } from "../types/types";
+import { AuthConfig } from "../types/types";
+import { JWTHeaderParameters, JWTPayload } from "jose";
 export declare class JWTVerifier {
     private config;
     constructor(config: AuthConfig);
@@ -6,9 +7,14 @@ export declare class JWTVerifier {
     isCryptoAvailable(): boolean;
     isValid(token: string): Promise<boolean>;
     isExpired(token: string): boolean;
-    private getTokenHeaders;
-    getTokenPayload(token: string): JwtPayload;
     private getJwkByKidFromCache;
     private fetchJwksByKid;
+    dissectJwt(jwt: string): {
+        jwt: string;
+        header: JWTHeaderParameters;
+        payload: JWTPayload;
+    };
+    private getTokenHeaders;
+    getTokenPayload(token: string): JWTPayload;
 }
 //# sourceMappingURL=verifier.d.ts.map

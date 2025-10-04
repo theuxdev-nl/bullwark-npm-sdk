@@ -6,20 +6,25 @@ export declare class BullwarkSdk {
     private readonly jwtVerifier;
     private readonly apiClient;
     private permissionChecker;
-    private jwtUtils;
     private refreshInterval?;
     private events;
     constructor(config: AuthConfig);
+    /**
+     * On first load of the SDK, check existing storage to see if there's a stored JWT (in storage) or a refreshToken is in place.
+     * Tries to verify existing JWT, or tries to log in again using refresh token.
+     * @private
+     */
     private checkOnStartup;
+    /** Perform a login call to Bullwark. Returns 'true' if successful
+     *
+     * @param email
+     * @param password
+     */
     login(email: string, password: string): Promise<boolean>;
     refresh(suppliedRefreshToken?: string | undefined | null): Promise<boolean>;
-    logout(token?: string | null): Promise<void>;
-    get user(): User | undefined;
-    get isAuthenticated(): boolean;
-    get tokenExpiresIn(): number | 0;
-    get tokenExpired(): boolean;
-    get tokenStillValid(): boolean;
-    get tokenAlmostExpired(): boolean;
+    logout(token?: string | null): Promise<boolean>;
+    getUser(): User | undefined;
+    getAuthenticated(): boolean;
     userCan(uuid: string): boolean;
     userCanKey(key: string): boolean;
     userHasRole(uuid: string): boolean;

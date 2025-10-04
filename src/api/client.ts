@@ -1,8 +1,6 @@
-import {LoginCredentials, AuthConfig, User, AuthResponse} from "../types/types";
+import {AuthConfig, User} from "../types/types";
 import {AuthState} from "../state/auth-state";
-import {JWTVerifier} from "../jwt/verifier";
-import storage from 'local-storage-fallback'
-import {ConnectionError, ConnectionIncorrectResponseError, InvalidInputError, JwtMissingError} from "../errors/errors";
+import {ConnectionError, ConnectionIncorrectResponseError, InvalidInputError} from "../errors/errors";
 
 
 export class APIClient {
@@ -17,7 +15,7 @@ export class APIClient {
             throw new InvalidInputError('Password missing!')
         }
 
-        const response = await fetch(`${this.config.apiUrl}/api/auth/v1/login${this.config.useCookie ? '' : '?plainRefresh=true'}`, {
+        const response = await fetch(`${this.config.apiUrl}/login${this.config.useCookie ? '' : '?plainRefresh=true'}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -43,7 +41,7 @@ export class APIClient {
     }
 
     public async refresh(suppliedRefreshToken: string|undefined|null = undefined): Promise<{jwt: string, refreshToken: string|null|undefined}> {
-        const response = await fetch(`${this.config.apiUrl}/api/auth/v1/refresh${this.config.useCookie ? '' : '?plainRefresh=true'}`, {
+        const response = await fetch(`${this.config.apiUrl}/refresh${this.config.useCookie ? '' : '?plainRefresh=true'}`, {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
@@ -66,13 +64,13 @@ export class APIClient {
     }
 
     public async logout(suppliedJwt: string|null = null): Promise<void> {
-        const response = await fetch(`${this.config.apiUrl}/api/auth/v1/logout`, {
+        const response = await fetch(`${this.config.apiUrl}/logout`, {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
                 'X-Tenant-Uuid': this.config.tenantUuid,
-                'Authorization': `Bearer ${suppliedJwt ?? this.state.storedJwtToken}`
+                'Authorization': `Bearer ${suppliedJwt ?? this.state.getJwt()}`
             }
         })
 
@@ -80,7 +78,7 @@ export class APIClient {
     }
 
     public async fetchUser(token: string) : Promise<User> {
-        const response = await fetch(`${this.config.apiUrl}/api/auth/v1/me`, {
+        const response = await fetch(`${this.config.apiUrl}/me`, {
             headers: {
                 'X-Customer-Uuid': this.config.customerUuid,
                 'X-Tenant-Uuid': this.config.tenantUuid,

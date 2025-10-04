@@ -1,13 +1,15 @@
 import { JWTPayload } from "jose";
 export interface AuthConfig {
-    apiUrl: string;
+    devMode?: boolean;
+    apiUrl?: string;
+    jwkUrl?: string;
     tenantUuid: string;
     customerUuid: string;
-    devMode?: boolean;
-    useLocalStorage?: boolean;
     useCookie?: boolean;
     autoRefresh?: boolean;
     autoRefreshBuffer?: number;
+    jwkCacheTime?: number;
+    userCacheTime?: number;
 }
 export interface LoginCredentials {
     email: string;
@@ -65,5 +67,9 @@ export interface Ability {
     uuid: string;
     key: string;
     label: string;
+}
+export interface SavedJwk {
+    jwk: Jwk;
+    expiresAt: number;
 }
 //# sourceMappingURL=types.d.ts.map
