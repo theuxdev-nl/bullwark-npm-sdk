@@ -52,6 +52,7 @@ export class JWTVerifier {
     async fetchJwksByKid(kid) {
         if (!kid)
             throw new Error('kid missing.');
+        console.log(`Fetching JWKs from ` + this.config.jwkUrl + ' now.');
         const response = await fetch(`${this.config.jwkUrl}`, {
             headers: {
                 'X-Tenant-Uuid': this.config.tenantUuid ?? '',
@@ -60,9 +61,10 @@ export class JWTVerifier {
         if (!response.ok)
             throw new Error('Could not refresh jwks');
         const data = await response.json();
-        const key = data.keys.find((keySet) => keySet.jwk.kid === kid);
+        const key = data.keys.find((key) => key.kid == kid);
         if (!key)
             throw new Error('Could not refresh jwks');
+        console.log(data);
         this.JWKs.push({
             jwk: key,
             expiresAt: Date.now() + ((this.config.jwkCacheTime ?? 86400) * 1000)
@@ -81,6 +83,7 @@ export class JWTVerifier {
         const headers = JSON.parse(atob(token.split('.')[0]));
         if (!headers)
             throw new Error("Invalid JWT header");
+        console.log(headers);
         return headers;
     }
     getTokenPayload(token) {
