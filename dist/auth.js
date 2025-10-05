@@ -8,8 +8,8 @@ export class BullwarkSdk {
     constructor(config) {
         this.events = new EventEmitter();
         this.config = {
-            apiUrl: 'https://api.bullwark.com',
-            jwkUrl: 'https://api.bullwark.com/.well-known/jwks',
+            apiUrl: 'https://api.bullwark.io/api/auth/v1',
+            jwkUrl: 'https://api.bullwark.io/.well-known/jwks',
             devMode: false,
             useCookie: true,
             autoRefresh: true,
