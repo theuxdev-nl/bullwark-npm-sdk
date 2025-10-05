@@ -56,7 +56,7 @@ export class JWTVerifier {
         if (!kid) throw new Error('kid missing.');
         const response = await fetch(`${this.config.jwkUrl}`, {
             headers: {
-                'X-Tenant-Uuid': this.config.tenantUuid,
+                'X-Tenant-Uuid': this.config.tenantUuid ?? '',
             }
         })
 

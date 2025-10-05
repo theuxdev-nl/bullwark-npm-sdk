@@ -21,8 +21,8 @@ export class BullwarkSdk {
 
     constructor(config: AuthConfig) {
         this.config = {
-            apiUrl: 'https://api.bullwark.com',
-            jwkUrl: 'https://api.bullwark.com/.well-known/jwks',
+            apiUrl: 'https://api.bullwark.io/api/auth/v1',
+            jwkUrl: 'https://api.bullwark.io/.well-known/jwks',
             devMode: false,
             useCookie: true,
             autoRefresh: true,
@@ -59,12 +59,12 @@ export class BullwarkSdk {
     private async checkOnStartup(): Promise<void> {
         const jwt = this.state.getJwt();
         if (jwt && jwt !== '' && jwt !== null) {
-            if(
+            if (
                 !await this.jwtVerifier.isValid(jwt) ||
                 this.jwtVerifier.isExpired(jwt)
-            ){
-                if(this.config.devMode) {
-                    if(!await this.jwtVerifier.isValid(jwt)){
+            ) {
+                if (this.config.devMode) {
+                    if (!await this.jwtVerifier.isValid(jwt)) {
                         console.debug("Bullwark: Stored JWT token is invalid!");
                     } else {
                         console.debug("Bullwark: Stored JWT token has expired.");
@@ -75,18 +75,18 @@ export class BullwarkSdk {
                 return;
             }
 
-            try{
+            try {
                 const user = await this.apiClient.fetchUser(jwt);
                 this.state.setUser(user)
                     .setAuthenticated(true)
                     .finishInitializing();
 
-                this.events.emit('userHydrated', { user });
+                this.events.emit('userHydrated', {user});
                 this.events.emit('bullwarkLoaded');
                 await this.startRefreshInterval()
                 return;
             } catch {
-                if(this.config.devMode) {
+                if (this.config.devMode) {
                     console.debug("Bullwark: Unable to retrieve user details using existing JWT.");
                 }
                 this.state.invalidateSession().finishInitializing();
@@ -107,24 +107,24 @@ export class BullwarkSdk {
                     .setAuthenticated(true)
                     .finishInitializing();
 
-                if(!this.config.useCookie && refreshToken){
+                if (!this.config.useCookie && refreshToken) {
                     this.state.setRefreshToken(refreshToken);
                 }
 
-                this.events.emit('userHydrated', { userData });
+                this.events.emit('userHydrated', {userData});
                 this.events.emit('bullwarkLoaded');
 
                 await this.startRefreshInterval()
                 return;
-            } catch(err) {
-                if(this.config.devMode) {
+            } catch (err) {
+                if (this.config.devMode) {
                     console.debug("Bullwark: Unable to use refreshToken to refresh JWT.");
                     console.debug(err);
                 }
             }
         }
 
-        if(this.config.devMode){
+        if (this.config.devMode) {
             console.debug("Bullwark: No refresh token or existing JWT in place. Starting clean.")
         }
         this.state.finishInitializing();
@@ -138,10 +138,10 @@ export class BullwarkSdk {
     public async login(email: string, password: string): Promise<boolean> {
         this.state.invalidateSession(); // Clear any stale old state
         const {jwt: rawJwt, refreshToken} = await this.apiClient.login(email, password);
-        if(this.jwtVerifier.isExpired(rawJwt)) throw new Error("Bullwark: JWT is expired already!")
-        if(!await this.jwtVerifier.isValid(rawJwt)) throw new Error("Bullwark: JWT could not be verified. Possible security breach!")
+        if (this.jwtVerifier.isExpired(rawJwt)) throw new Error("Bullwark: JWT is expired already!")
+        if (!await this.jwtVerifier.isValid(rawJwt)) throw new Error("Bullwark: JWT could not be verified. Possible security breach!")
 
-        if(!this.config.useCookie && refreshToken){
+        if (!this.config.useCookie && refreshToken) {
             this.state.setRefreshToken(refreshToken)
         }
 
@@ -153,33 +153,33 @@ export class BullwarkSdk {
             .setAuthenticated(true)
             .finishInitializing();
 
-        this.events.emit('userLoggedIn', { userData });
+        this.events.emit('userLoggedIn', {userData});
         await this.startRefreshInterval()
         return true;
     }
 
-    public async refresh(suppliedRefreshToken: string|undefined|null = null): Promise<boolean> {
+    public async refresh(suppliedRefreshToken: string | undefined | null = null): Promise<boolean> {
         const {jwt: rawJwt, refreshToken} = await this.apiClient.refresh(suppliedRefreshToken);
 
-        if(this.jwtVerifier.isExpired(rawJwt)) throw new Error("Bullwark: new JWT is expired already!")
-        if(!await this.jwtVerifier.isValid(rawJwt)) throw new Error("Bullwark: new JWT could not be verified. Possible security breach!")
+        if (this.jwtVerifier.isExpired(rawJwt)) throw new Error("Bullwark: new JWT is expired already!")
+        if (!await this.jwtVerifier.isValid(rawJwt)) throw new Error("Bullwark: new JWT could not be verified. Possible security breach!")
 
         const {jwt, header, payload} = this.jwtVerifier.dissectJwt(rawJwt);
         this.state.setJwt(jwt, header, payload);
-        if(!this.config.useCookie && refreshToken){
+        if (!this.config.useCookie && refreshToken) {
             this.state.setRefreshToken(refreshToken)
         }
 
         let userData: UserData;
         const detailsChanged = this.state.getDetailsHashChanged();
-        if(detailsChanged) {
+        if (detailsChanged) {
             userData = await this.apiClient.fetchUser(jwt);
             this.state.setUser(userData);
         } else {
             userData = this.state.getUser() ?? await this.apiClient.fetchUser(jwt);
         }
 
-        this.events.emit('userRefreshed', { userData });
+        this.events.emit('userRefreshed', {userData});
 
         return true;
     }
@@ -200,7 +200,7 @@ export class BullwarkSdk {
         return this.state.getIsInitialized();
     }
 
-    public getUserCachedAt(): number|undefined {
+    public getUserCachedAt(): number | undefined {
         return this.state.getUserCachedAt();
     }
 
@@ -264,7 +264,7 @@ export class BullwarkSdk {
 
     private async startRefreshInterval() {
         if (!this.config.autoRefresh || this.refreshInterval) return;
-        if(!this.state.getJwtExp() || !this.config.autoRefreshBuffer) return;
+        if (!this.state.getJwtExp() || !this.config.autoRefreshBuffer) return;
 
         this.refreshInterval = setInterval(() => {
             const expMs = (this.state.getJwtExp() ?? 0) * 1000;
