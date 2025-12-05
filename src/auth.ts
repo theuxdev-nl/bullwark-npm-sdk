@@ -57,81 +57,84 @@ export class BullwarkSdk {
      * @private
      */
     private async checkOnStartup(): Promise<void> {
-        const jwt = this.state.getJwt();
-        if (jwt && jwt !== '' && jwt !== null) {
-            try{
-                await this.jwtVerifier.checkJwtValid(jwt)
-            } catch (error) {
-                console.error(error);
-                this.state.invalidateSession()
-                    .setAuthenticated(false)
-                    .finishInitializing();
-                return;
-            }
+        if (this.config.customerUuid && this.config.tenantUuid) {
 
-            try {
-                const user = await this.apiClient.fetchUser(jwt);
-                this.state.setUser(user)
-                    .setAuthenticated(true)
-                    .finishInitializing();
-
-                await this.startRefreshInterval()
-                this.events.emit('userHydrated', {user});
-                this.events.emit('bullwarkLoaded');
-                return;
-            } catch {
-                if (this.config.devMode) {
-                    console.debug("Bullwark: Unable to retrieve user details using existing JWT.");
-                }
-                this.state.invalidateSession()
-                    .setAuthenticated(false)
-                    .finishInitializing();
-                return;
-            }
-
-        } else {
-            try {
-                // Attempt refresh flow
-                const oldRefreshToken = this.config.useCookie ? undefined : this.state.getRefreshToken();
-
-                const {jwt: rawJwt, refreshToken} = await this.apiClient.refresh(oldRefreshToken);
-                const {jwt, header, payload} = this.jwtVerifier.dissectJwt(rawJwt);
-
-                try{
-                    await this.jwtVerifier.checkJwtValid(jwt);
+            const jwt = this.state.getJwt();
+            if (jwt && jwt !== '' && jwt !== null) {
+                try {
+                    await this.jwtVerifier.checkJwtValid(jwt)
                 } catch (error) {
                     console.error(error);
+                    this.state.invalidateSession()
+                        .setAuthenticated(false)
+                        .finishInitializing();
                     return;
                 }
 
-                this.state.setJwt(jwt, header, payload);
-                const userData: UserData = await this.apiClient.fetchUser(jwt);
+                try {
+                    const user = await this.apiClient.fetchUser(jwt);
+                    this.state.setUser(user)
+                        .setAuthenticated(true)
+                        .finishInitializing();
 
-                this.state.setUser(userData)
-                    .setAuthenticated(true)
-                    .finishInitializing();
-
-                if (!this.config.useCookie && refreshToken) {
-                    this.state.setRefreshToken(refreshToken);
+                    await this.startRefreshInterval()
+                    this.events.emit('userHydrated', {user});
+                    this.events.emit('bullwarkLoaded');
+                    return;
+                } catch {
+                    if (this.config.devMode) {
+                        console.debug("Bullwark: Unable to retrieve user details using existing JWT.");
+                    }
+                    this.state.invalidateSession()
+                        .setAuthenticated(false)
+                        .finishInitializing();
+                    return;
                 }
 
-                this.events.emit('userHydrated', {userData});
-                this.events.emit('bullwarkLoaded');
+            } else {
+                try {
+                    // Attempt refresh flow
+                    const oldRefreshToken = this.config.useCookie ? undefined : this.state.getRefreshToken();
 
-                await this.startRefreshInterval()
-                return;
-            } catch (err) {
-                if (this.config.devMode) {
-                    console.debug("Bullwark: Unable to use refreshToken to refresh JWT.");
-                    console.debug(err);
+                    const {jwt: rawJwt, refreshToken} = await this.apiClient.refresh(oldRefreshToken);
+                    const {jwt, header, payload} = this.jwtVerifier.dissectJwt(rawJwt);
+
+                    try {
+                        await this.jwtVerifier.checkJwtValid(jwt);
+                    } catch (error) {
+                        console.error(error);
+                        return;
+                    }
+
+                    this.state.setJwt(jwt, header, payload);
+                    const userData: UserData = await this.apiClient.fetchUser(jwt);
+
+                    this.state.setUser(userData)
+                        .setAuthenticated(true)
+                        .finishInitializing();
+
+                    if (!this.config.useCookie && refreshToken) {
+                        this.state.setRefreshToken(refreshToken);
+                    }
+
+                    this.events.emit('userHydrated', {userData});
+                    this.events.emit('bullwarkLoaded');
+
+                    await this.startRefreshInterval()
+                    return;
+                } catch (err) {
+                    if (this.config.devMode) {
+                        console.debug("Bullwark: Unable to use refreshToken to refresh JWT.");
+                        console.debug(err);
+                    }
                 }
             }
-        }
 
-        if (this.config.devMode) {
-            console.debug("Bullwark: No refresh token or existing JWT in place. Starting clean.")
+            if (this.config.devMode) {
+                console.debug("Bullwark: No refresh token or existing JWT in place. Starting clean.")
+            }
+            this.state.finishInitializing();
         }
-        this.state.finishInitializing();
     }
 
     /** Perform a login call to Bullwark. Returns 'true' if successful
@@ -143,7 +146,7 @@ export class BullwarkSdk {
         this.state.invalidateSession(); // Clear any stale old state
         const {jwt: rawJwt, refreshToken} = await this.apiClient.login(email, password);
         if (this.jwtVerifier.isExpired(rawJwt)) throw new Error("Bullwark: JWT is expired already!")
-        try{
+        try {
             await this.jwtVerifier.checkJwtValid(rawJwt);
         } catch (error) {
             throw new Error("Bullwark: JWT could not be verified. Possible security breach!")
