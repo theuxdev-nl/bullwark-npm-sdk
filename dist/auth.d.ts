@@ -40,5 +40,7 @@ export declare class BullwarkSdk {
     on(event: string, callback: Function): void;
     off(event: string, callback: Function): void;
     private startRefreshInterval;
+    setCustomerUuid(uid: string): void;
+    setTenantUuid(uid: string): void;
 }
 //# sourceMappingURL=auth.d.ts.map

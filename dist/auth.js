@@ -239,5 +239,11 @@ export class BullwarkSdk {
             }
         }, 30000);
     }
+    setCustomerUuid(uid) {
+        this.config.customerUuid = uid;
+    }
+    setTenantUuid(uid) {
+        this.config.tenantUuid = uid;
+    }
 }
 //# sourceMappingURL=auth.js.map
