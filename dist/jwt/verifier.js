@@ -9,14 +9,20 @@ export class JWTVerifier {
             typeof crypto !== 'undefined' &&
             typeof crypto.subtle !== 'undefined';
     }
-    async isValid(token) {
+    async checkJwtValid(token) {
         if (!token)
             throw new JwtMissingError("Token not supplied to verify");
         if (this.isCryptoAvailable()) {
             const { jwtVerify } = await import('jose');
-            const { header } = this.dissectJwt(token);
+            const { header, payload } = this.dissectJwt(token);
             if (!header['kid'])
                 throw new Error("KID missign from JWT!");
+            if (payload['iss'] !== 'bullwark')
+                throw new Error("JWT issuer isn't Bullwark!");
+            if (this.config.tenantUuid) {
+                if (payload['aud'] !== this.config.tenantUuid)
+                    throw new Error("JWT audience is not the same as config's tenantUuid!");
+            }
             let jwk = this.getJwkByKidFromCache(header.kid);
             if (!jwk)
                 await this.fetchJwksByKid(header.kid);
@@ -27,12 +33,7 @@ export class JWTVerifier {
                 issuer: 'bullwark',
                 audience: this.config.tenantUuid,
             });
-            return true;
         }
-        else if (this.config.devMode) {
-            return true;
-        }
-        return false;
     }
     isExpired(token) {
         const { payload } = this.dissectJwt(token);

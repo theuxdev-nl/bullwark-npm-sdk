@@ -59,19 +59,13 @@ export class BullwarkSdk {
     private async checkOnStartup(): Promise<void> {
         const jwt = this.state.getJwt();
         if (jwt && jwt !== '' && jwt !== null) {
-            if (
-                !await this.jwtVerifier.isValid(jwt) ||
-                this.jwtVerifier.isExpired(jwt)
-            ) {
-                if (this.config.devMode) {
-                    if (!await this.jwtVerifier.isValid(jwt)) {
-                        console.debug("Bullwark: Stored JWT token is invalid!");
-                    } else {
-                        console.debug("Bullwark: Stored JWT token has expired.");
-                    }
-                }
-
-                this.state.invalidateSession().finishInitializing();
+            try{
+                await this.jwtVerifier.checkJwtValid(jwt)
+            } catch (error) {
+                console.error(error);
+                this.state.invalidateSession()
+                    .setAuthenticated(false)
+                    .finishInitializing();
                 return;
             }
 
@@ -81,15 +75,17 @@ export class BullwarkSdk {
                     .setAuthenticated(true)
                     .finishInitializing();
 
+                await this.startRefreshInterval()
                 this.events.emit('userHydrated', {user});
                 this.events.emit('bullwarkLoaded');
-                await this.startRefreshInterval()
                 return;
             } catch {
                 if (this.config.devMode) {
                     console.debug("Bullwark: Unable to retrieve user details using existing JWT.");
                 }
-                this.state.invalidateSession().finishInitializing();
+                this.state.invalidateSession()
+                    .setAuthenticated(false)
+                    .finishInitializing();
                 return;
             }
 
@@ -100,6 +96,14 @@ export class BullwarkSdk {
 
                 const {jwt: rawJwt, refreshToken} = await this.apiClient.refresh(oldRefreshToken);
                 const {jwt, header, payload} = this.jwtVerifier.dissectJwt(rawJwt);
+
+                try{
+                    await this.jwtVerifier.checkJwtValid(jwt);
+                } catch (error) {
+                    console.error(error);
+                    return;
+                }
+
                 this.state.setJwt(jwt, header, payload);
                 const userData: UserData = await this.apiClient.fetchUser(jwt);
 
@@ -139,7 +143,11 @@ export class BullwarkSdk {
         this.state.invalidateSession(); // Clear any stale old state
         const {jwt: rawJwt, refreshToken} = await this.apiClient.login(email, password);
         if (this.jwtVerifier.isExpired(rawJwt)) throw new Error("Bullwark: JWT is expired already!")
-        if (!await this.jwtVerifier.isValid(rawJwt)) throw new Error("Bullwark: JWT could not be verified. Possible security breach!")
+        try{
+            await this.jwtVerifier.checkJwtValid(rawJwt);
+        } catch (error) {
+            throw new Error("Bullwark: JWT could not be verified. Possible security breach!")
+        }
 
         if (!this.config.useCookie && refreshToken) {
             this.state.setRefreshToken(refreshToken)
@@ -162,7 +170,11 @@ export class BullwarkSdk {
         const {jwt: rawJwt, refreshToken} = await this.apiClient.refresh(suppliedRefreshToken);
 
         if (this.jwtVerifier.isExpired(rawJwt)) throw new Error("Bullwark: new JWT is expired already!")
-        if (!await this.jwtVerifier.isValid(rawJwt)) throw new Error("Bullwark: new JWT could not be verified. Possible security breach!")
+        try {
+            await this.jwtVerifier.checkJwtValid(rawJwt)
+        } catch (error) {
+            throw new Error("Bullwark: new JWT could not be verified. Possible security breach!")
+        }
 
         const {jwt, header, payload} = this.jwtVerifier.dissectJwt(rawJwt);
         this.state.setJwt(jwt, header, payload);
@@ -273,6 +285,14 @@ export class BullwarkSdk {
                 this.refresh().catch(console.error);
             }
         }, 30000);
+    }
+
+    public setCustomerUuid(uid: string): void {
+        this.config.customerUuid = uid;
+    }
+
+    public setTenantUuid(uid: string): void {
+        this.config.tenantUuid = uid;
     }
 
 }

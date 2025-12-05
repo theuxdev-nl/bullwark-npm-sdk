@@ -11,6 +11,9 @@ importers:
       axios:
         specifier: ^1.6.0
         version: 1.12.2
+      jose:
+        specifier: ^6.1.0
+        version: 6.1.0
       local-storage-fallback:
         specifier: ^5.0.0
         version: 5.0.0
@@ -30,9 +33,6 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
-      jose:
-        specifier: ^6.1.0
-        version: 6.1.0
       typescript:
         specifier: ^5.0.0
         version: 5.9.2

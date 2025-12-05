@@ -5,7 +5,7 @@ export declare class JWTVerifier {
     constructor(config: AuthConfig);
     private JWKs;
     isCryptoAvailable(): boolean;
-    isValid(token: string): Promise<boolean>;
+    checkJwtValid(token: string): Promise<void>;
     isExpired(token: string): boolean;
     private getJwkByKidFromCache;
     private fetchJwksByKid;
