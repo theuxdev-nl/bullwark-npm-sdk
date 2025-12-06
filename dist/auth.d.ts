@@ -1,4 +1,4 @@
-import { AuthConfig, UserData } from "./types/types";
+import { AuthConfig, User } from "./types/types";
 import { AuthState } from "./state/auth-state";
 export declare class BullwarkSdk {
     readonly state: AuthState;
@@ -25,7 +25,7 @@ export declare class BullwarkSdk {
     logout(token?: string | null): Promise<boolean>;
     getIsInitialized(): Promise<boolean>;
     getUserCachedAt(): number | undefined;
-    getUser(): UserData | undefined;
+    getUser(): User | undefined;
     getAuthenticated(): boolean;
     getJwt(): string | undefined;
     getJwtExp(): number | undefined;

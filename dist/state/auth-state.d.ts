@@ -1,4 +1,4 @@
-import { AuthConfig, UserData } from "../types/types";
+import { AuthConfig, User } from "../types/types";
 import { JWTHeaderParameters, JWTPayload } from "jose";
 export declare class AuthState {
     private readonly initPromise;
@@ -7,8 +7,6 @@ export declare class AuthState {
     private jwt;
     private jwtExp;
     private refreshToken;
-    private detailsHash;
-    private previousDetailsHash;
     private readonly config;
     private user;
     private userCachedAt;
@@ -22,7 +20,7 @@ export declare class AuthState {
      * Get user's details stored from memory.
      * @returns ?User
      */
-    getUser(): UserData | undefined;
+    getUser(): User | undefined;
     /**
      * Check if the user is successfully logged in.
      * @returns boolean
@@ -51,18 +49,11 @@ export declare class AuthState {
      */
     getUserCachedAt(): number | undefined;
     /**
-     * Check if the detailsHash has been updated.
-     * This hash is composed of the user's ability and role Uuids, and the updatedAt value.
-     * In order to prevent unneeded API calls, only fetch on hash change.
-     * @returns boolean
-     */
-    getDetailsHashChanged(): boolean;
-    /**
      * Store the retrieved User from the '/me' endpoint.
      * Save a timestamp of when the user was cached.
-     * @param user
+     * @param payload
      */
-    setUser(user: UserData): this;
+    setUser(payload: JWTPayload): this;
     /**
      * Set the authenticated field
      * @param authenticated

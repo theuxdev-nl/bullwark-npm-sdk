@@ -5,8 +5,6 @@ export class AuthState {
         this.jwt = undefined;
         this.jwtExp = undefined;
         this.refreshToken = undefined;
-        this.detailsHash = undefined;
-        this.previousDetailsHash = undefined;
         this.user = undefined;
         this.userCachedAt = undefined;
         this.config = config;
@@ -80,25 +78,21 @@ export class AuthState {
     getUserCachedAt() {
         return this.userCachedAt;
     }
-    /**
-     * Check if the detailsHash has been updated.
-     * This hash is composed of the user's ability and role Uuids, and the updatedAt value.
-     * In order to prevent unneeded API calls, only fetch on hash change.
-     * @returns boolean
-     */
-    getDetailsHashChanged() {
-        if (!this.detailsHash)
-            return false;
-        return this.previousDetailsHash !== this.detailsHash;
-    }
     // Setters ========================================================
     /**
      * Store the retrieved User from the '/me' endpoint.
      * Save a timestamp of when the user was cached.
-     * @param user
+     * @param payload
      */
-    setUser(user) {
-        this.user = user;
+    setUser(payload) {
+        this.user = {
+            uuid: payload['sub'],
+            tenantUuid: payload['tenant_uuid'],
+            customerUuid: payload['customer_uuid'],
+            abilities: payload['https://bullwark.io/claims/abilities'],
+            roles: payload['https://bullwark.io/claims/roles'],
+            isAdmin: payload['https://bullwark.io/claims/is_admin'],
+        };
         this.userCachedAt = Date.now();
         return this;
     }
@@ -121,8 +115,6 @@ export class AuthState {
     setJwt(rawJwt, _header, payload, persist = true) {
         this.jwt = rawJwt;
         this.jwtExp = payload.exp;
-        this.previousDetailsHash = this.detailsHash;
-        this.detailsHash = payload['detailsHash'];
         if (persist) {
             storage.setItem('bullwark:jwt', this.jwt);
             storage.setItem('bullwark:jwt-exp', this.jwtExp.toString());
@@ -161,7 +153,6 @@ export class AuthState {
         this.jwt = undefined;
         this.refreshToken = undefined;
         this.jwtExp = undefined;
-        this.detailsHash = undefined;
         return this;
     }
 }

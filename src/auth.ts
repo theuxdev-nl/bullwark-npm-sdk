@@ -2,8 +2,7 @@ import {JWTVerifier} from './jwt/verifier';
 import {APIClient} from './api/client';
 import {AbilityChecker} from './abilities/checker';
 import {
-    AuthConfig,
-    UserData,
+    AuthConfig, User,
 } from "./types/types";
 import {AuthState} from "./state/auth-state";
 import {CryptoError} from "./errors/errors";
@@ -58,27 +57,19 @@ export class BullwarkSdk {
      */
     private async checkOnStartup(): Promise<void> {
         if (this.config.customerUuid && this.config.tenantUuid) {
-
             const jwt = this.state.getJwt();
+
             if (jwt && jwt !== '' && jwt !== null) {
-                try {
-                    await this.jwtVerifier.checkJwtValid(jwt)
-                } catch (error) {
-                    console.error(error);
-                    this.state.invalidateSession()
-                        .setAuthenticated(false)
-                        .finishInitializing();
-                    return;
-                }
+                await this.jwtVerifier.checkJwtValid(jwt)
+                const {payload} = this.jwtVerifier.dissectJwt(jwt);
 
                 try {
-                    const user = await this.apiClient.fetchUser(jwt);
-                    this.state.setUser(user)
+                    this.state.setUser(payload)
                         .setAuthenticated(true)
                         .finishInitializing();
 
                     await this.startRefreshInterval()
-                    this.events.emit('userHydrated', {user});
+                    this.events.emit('userHydrated', this.state.getUser());
                     this.events.emit('bullwarkLoaded');
                     return;
                 } catch {
@@ -107,9 +98,7 @@ export class BullwarkSdk {
                     }
 
                     this.state.setJwt(jwt, header, payload);
-                    const userData: UserData = await this.apiClient.fetchUser(jwt);
-
-                    this.state.setUser(userData)
+                    this.state.setUser(payload)
                         .setAuthenticated(true)
                         .finishInitializing();
 
@@ -117,7 +106,7 @@ export class BullwarkSdk {
                         this.state.setRefreshToken(refreshToken);
                     }
 
-                    this.events.emit('userHydrated', {userData});
+                    this.events.emit('userHydrated', this.state.getUser());
                     this.events.emit('bullwarkLoaded');
 
                     await this.startRefreshInterval()
@@ -157,14 +146,13 @@ export class BullwarkSdk {
         }
 
         const {jwt, header, payload} = this.jwtVerifier.dissectJwt(rawJwt);
-        const userData: UserData = await this.apiClient.fetchUser(jwt)
 
         this.state.setJwt(jwt, header, payload)
-            .setUser(userData)
+            .setUser(payload)
             .setAuthenticated(true)
             .finishInitializing();
 
-        this.events.emit('userLoggedIn', {userData});
+        this.events.emit('userLoggedIn', this.state.getUser());
         await this.startRefreshInterval()
         return true;
     }
@@ -181,20 +169,12 @@ export class BullwarkSdk {
 
         const {jwt, header, payload} = this.jwtVerifier.dissectJwt(rawJwt);
         this.state.setJwt(jwt, header, payload);
+        this.state.setUser(payload);
         if (!this.config.useCookie && refreshToken) {
             this.state.setRefreshToken(refreshToken)
         }
 
-        let userData: UserData;
-        const detailsChanged = this.state.getDetailsHashChanged();
-        if (detailsChanged) {
-            userData = await this.apiClient.fetchUser(jwt);
-            this.state.setUser(userData);
-        } else {
-            userData = this.state.getUser() ?? await this.apiClient.fetchUser(jwt);
-        }
-
-        this.events.emit('userRefreshed', {userData});
+        this.events.emit('userRefreshed', this.state.getUser());
 
         return true;
     }
@@ -219,7 +199,7 @@ export class BullwarkSdk {
         return this.state.getUserCachedAt();
     }
 
-    public getUser(): UserData | undefined {
+    public getUser(): User | undefined {
         return this.state.getUser();
     }
 
@@ -240,15 +220,15 @@ export class BullwarkSdk {
     }
 
     public getUserUuid(): string | undefined {
-        return this.getUser()?.user.uuid;
+        return this.getUser()?.uuid;
     }
 
     public getTenantUuid(): string | undefined {
-        return this.getUser()?.user.tenantUuid;
+        return this.getUser()?.tenantUuid;
     }
 
     public getCustomerUuid(): string | undefined {
-        return this.getUser()?.user.customerUuid;
+        return this.getUser()?.customerUuid;
     }
 
     public userCan(uuid: string): boolean {

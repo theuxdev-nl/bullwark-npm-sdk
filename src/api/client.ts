@@ -1,4 +1,4 @@
-import {AuthConfig, UserData} from "../types/types";
+import {AuthConfig} from "../types/types";
 import {AuthState} from "../state/auth-state";
 import {ConnectionError, ConnectionIncorrectResponseError, InvalidInputError} from "../errors/errors";
 
@@ -84,21 +84,21 @@ export class APIClient {
         if (!response.ok) throw new Error("Could not logout");
     }
 
-    public async fetchUser(jwt: string): Promise<UserData> {
-        const response = await fetch(`${this.config.apiUrl}/me`, {
-            headers: {
-                'X-Customer-Uuid': this.config.customerUuid,
-                'X-Tenant-Uuid': this.config.tenantUuid,
-                'Authorization': `Bearer ${jwt}`,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (!response.ok) throw new ConnectionError('Could not fetch user details');
-        const data = await response.json();
-        if (!data) throw new ConnectionError("Could not fetch user details");
-        return data;
-    }
+    // public async fetchUser(jwt: string): Promise<UserData> {
+    //     const response = await fetch(`${this.config.apiUrl}/me`, {
+    //         headers: {
+    //             'X-Customer-Uuid': this.config.customerUuid,
+    //             'X-Tenant-Uuid': this.config.tenantUuid,
+    //             'Authorization': `Bearer ${jwt}`,
+    //             'Accept': 'application/json',
+    //             'Content-Type': 'application/json'
+    //         }
+    //     });
+    //
+    //     if (!response.ok) throw new ConnectionError('Could not fetch user details');
+    //     const data = await response.json();
+    //     if (!data) throw new ConnectionError("Could not fetch user details");
+    //     return data;
+    // }
 
 }

@@ -1,4 +1,4 @@
-import {AuthConfig, UserData} from "../types/types";
+import {AuthConfig, User} from "../types/types";
 import storage from 'local-storage-fallback'
 import {JWTHeaderParameters, JWTPayload} from "jose";
 
@@ -9,11 +9,9 @@ export class AuthState {
     private jwt: string | undefined = undefined;
     private jwtExp: number | undefined = undefined;
     private refreshToken: string | undefined = undefined;
-    private detailsHash: string | undefined = undefined;
-    private previousDetailsHash: string | undefined = undefined;
     private readonly config: AuthConfig;
 
-    private user: UserData | undefined = undefined;
+    private user: User | undefined = undefined;
     private userCachedAt: number | undefined = undefined;
 
     constructor(config: AuthConfig) {
@@ -57,7 +55,7 @@ export class AuthState {
      * Get user's details stored from memory.
      * @returns ?User
      */
-    public getUser(): UserData | undefined {
+    public getUser(): User | undefined {
         return this.user;
     }
 
@@ -103,27 +101,22 @@ export class AuthState {
         return this.userCachedAt;
     }
 
-    /**
-     * Check if the detailsHash has been updated.
-     * This hash is composed of the user's ability and role Uuids, and the updatedAt value.
-     * In order to prevent unneeded API calls, only fetch on hash change.
-     * @returns boolean
-     */
-    public getDetailsHashChanged(): boolean {
-        if (!this.detailsHash) return false;
-        return this.previousDetailsHash !== this.detailsHash;
-    }
-
-
     // Setters ========================================================
 
     /**
      * Store the retrieved User from the '/me' endpoint.
      * Save a timestamp of when the user was cached.
-     * @param user
+     * @param payload
      */
-    public setUser(user: UserData) {
-        this.user = user;
+    public setUser(payload: JWTPayload) {
+        this.user = {
+            uuid: payload['sub'] as string,
+            tenantUuid: payload['tenant_uuid'] as string,
+            customerUuid: payload['customer_uuid'] as string,
+            abilities: payload['https://bullwark.io/claims/abilities'] as string[],
+            roles: payload['https://bullwark.io/claims/roles'] as string[],
+            isAdmin: payload['https://bullwark.io/claims/is_admin'] as boolean,
+        };
         this.userCachedAt = Date.now();
         return this;
     }
@@ -148,9 +141,6 @@ export class AuthState {
     public setJwt(rawJwt: string, _header: JWTHeaderParameters, payload: JWTPayload, persist: boolean = true) {
         this.jwt = rawJwt;
         this.jwtExp = payload.exp;
-        this.previousDetailsHash = this.detailsHash;
-        this.detailsHash = payload['detailsHash'] as string;
-
         if (persist) {
             storage.setItem('bullwark:jwt', this.jwt);
             storage.setItem('bullwark:jwt-exp', this.jwtExp!.toString());
@@ -194,7 +184,6 @@ export class AuthState {
         this.jwt = undefined;
         this.refreshToken = undefined;
         this.jwtExp = undefined;
-        this.detailsHash = undefined;
 
         return this;
     }
