@@ -66,7 +66,7 @@ export class JWTVerifier {
         const data = await response.json();
         const key = data.keys.find((key: Jwk) => key.kid == kid);
         if (!key) throw new Error('Could not refresh jwks');
-        console.log(data);
+        // console.log(data);
         this.JWKs.push({
             jwk: key,
             expiresAt: Date.now() + ((this.config.jwkCacheTime ?? 86400) * 1000)
@@ -85,7 +85,7 @@ export class JWTVerifier {
         if (!token) throw new JwtMissingError('Token not supplied to get headers');
         const headers: JWTHeaderParameters = JSON.parse(atob(token.split('.')[0]));
         if (!headers) throw new Error("Invalid JWT header");
-        console.log(headers);
+        // console.log(headers);
         return headers;
     }
 

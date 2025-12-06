@@ -168,8 +168,10 @@ export class BullwarkSdk {
         }
 
         const {jwt, header, payload} = this.jwtVerifier.dissectJwt(rawJwt);
-        this.state.setJwt(jwt, header, payload);
-        this.state.setUser(payload);
+        this.state.setJwt(jwt, header, payload)
+            .setUser(payload)
+            .setAuthenticated(true);
+
         if (!this.config.useCookie && refreshToken) {
             this.state.setRefreshToken(refreshToken)
         }
